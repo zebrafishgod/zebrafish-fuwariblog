@@ -1,4 +1,6 @@
 <script lang="ts">
+let { label = "切換色彩模式" }: { label?: string } = $props();
+
 import { AUTO_MODE, DARK_MODE, LIGHT_MODE } from "@constants/constants.ts";
 import I18nKey from "@i18n/i18nKey";
 import { i18n } from "@i18n/translation";
@@ -13,6 +15,7 @@ import type { LIGHT_DARK_MODE } from "@/types/config.ts";
 
 const seq: LIGHT_DARK_MODE[] = [LIGHT_MODE, DARK_MODE, AUTO_MODE];
 let mode: LIGHT_DARK_MODE = $state(AUTO_MODE);
+let panelOpen = $state(false);
 
 onMount(() => {
 	mode = getStoredTheme();
@@ -47,19 +50,17 @@ function toggleScheme() {
 }
 
 function showPanel() {
-	const panel = document.querySelector("#light-dark-panel");
-	panel.classList.remove("float-panel-closed");
+	panelOpen = true;
 }
 
 function hidePanel() {
-	const panel = document.querySelector("#light-dark-panel");
-	panel.classList.add("float-panel-closed");
+	panelOpen = false;
 }
 </script>
 
 <!-- z-50 make the panel higher than other float panels -->
-<div class="relative z-50" role="menu" tabindex="-1" onmouseleave={hidePanel}>
-    <button aria-label="Light/Dark Mode" role="menuitem" class="relative btn-plain scale-animation rounded-lg h-11 w-11 active:scale-90" id="scheme-switch" onclick={toggleScheme} onmouseenter={showPanel}>
+<div class="relative z-50" role="group" aria-label="色彩模式" onmouseleave={hidePanel} onfocusin={showPanel} onfocusout={(event) => { if (!event.currentTarget.contains(event.relatedTarget as Node)) hidePanel(); }} onkeydown={(event) => { if (event.key === "Escape") { document.getElementById("scheme-switch")?.focus(); hidePanel(); } }}>
+    <button aria-label={`${label}，目前${i18n(mode === LIGHT_MODE ? I18nKey.lightMode : mode === DARK_MODE ? I18nKey.darkMode : I18nKey.systemMode)}`} class="relative btn-plain scale-animation rounded-lg h-11 w-11 active:scale-90" id="scheme-switch" onclick={toggleScheme} onmouseenter={showPanel}>
         <div class="absolute" class:opacity-0={mode !== LIGHT_MODE}>
             <Icon icon="material-symbols:wb-sunny-outline-rounded" class="text-[1.25rem]"></Icon>
         </div>
@@ -71,7 +72,7 @@ function hidePanel() {
         </div>
     </button>
 
-    <div id="light-dark-panel" class="hidden lg:block absolute transition float-panel-closed top-11 -right-2 pt-5" >
+    <div id="light-dark-panel" class="hidden lg:block absolute transition top-11 -right-2 pt-5" class:float-panel-closed={!panelOpen} inert={!panelOpen}>
         <div class="card-base float-panel p-2">
             <button class="flex transition whitespace-nowrap items-center !justify-start w-full btn-plain scale-animation rounded-lg h-9 px-3 font-medium active:scale-95 mb-0.5"
                     class:current-theme-btn={mode === LIGHT_MODE}

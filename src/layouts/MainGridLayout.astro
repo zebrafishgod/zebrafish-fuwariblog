@@ -22,6 +22,7 @@ interface Props {
 	lang?: string;
 	setOGTypeArticle?: boolean;
 	headings?: MarkdownHeading[];
+	noindex?: boolean;
 }
 
 const {
@@ -31,6 +32,7 @@ const {
 	lang,
 	setOGTypeArticle,
 	headings = [],
+	noindex = false,
 } = Astro.props;
 const hasBannerCredit =
 	siteConfig.banner.enable && siteConfig.banner.credit.enable;
@@ -41,7 +43,7 @@ const mainPanelTop = siteConfig.banner.enable
 	: "5.5rem";
 ---
 
-<Layout title={title} banner={banner} description={description} lang={lang} setOGTypeArticle={setOGTypeArticle}>
+<Layout title={title} banner={banner} description={description} lang={lang} setOGTypeArticle={setOGTypeArticle} noindex={noindex}>
 
 <!-- Navbar -->
 <slot slot="head" name="head"></slot>
@@ -82,7 +84,7 @@ const mainPanelTop = siteConfig.banner.enable
 
             <SideBar class="mb-4 row-start-2 row-end-3 col-span-2 lg:row-start-1 lg:row-end-2 lg:col-span-1 lg:max-w-[17.5rem] onload-animation" headings={headings}></SideBar>
 
-            <main id="swup-container" class="transition-swup-fade col-span-2 lg:col-span-1 overflow-hidden">
+            <main id="swup-container" tabindex="-1" class="transition-swup-fade col-span-2 lg:col-span-1 overflow-hidden min-w-0">
                 <div id="content-wrapper" class="onload-animation">
                     <!-- the overflow-hidden here prevent long text break the layout-->
                     <!-- make id different from windows.swup global property -->

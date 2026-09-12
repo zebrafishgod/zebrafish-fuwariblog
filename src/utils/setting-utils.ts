@@ -6,6 +6,7 @@ import {
 } from "@constants/constants.ts";
 import { expressiveCodeConfig } from "@/config";
 import type { LIGHT_DARK_MODE } from "@/types/config";
+import { readPreference, writePreference } from "./preferences";
 
 export function getDefaultHue(): number {
 	const fallback = "250";
@@ -14,12 +15,12 @@ export function getDefaultHue(): number {
 }
 
 export function getHue(): number {
-	const stored = localStorage.getItem("hue");
+	const stored = readPreference("hue");
 	return stored ? Number.parseInt(stored, 10) : getDefaultHue();
 }
 
 export function setHue(hue: number): void {
-	localStorage.setItem("hue", String(hue));
+	writePreference("hue", String(hue));
 	const r = document.querySelector(":root") as HTMLElement;
 	if (!r) {
 		return;
@@ -52,10 +53,13 @@ export function applyThemeToDocument(theme: LIGHT_DARK_MODE) {
 }
 
 export function setTheme(theme: LIGHT_DARK_MODE): void {
-	localStorage.setItem("theme", theme);
+	writePreference("theme", theme);
 	applyThemeToDocument(theme);
 }
 
 export function getStoredTheme(): LIGHT_DARK_MODE {
-	return (localStorage.getItem("theme") as LIGHT_DARK_MODE) || DEFAULT_THEME;
+	const stored = readPreference("theme");
+	return stored === LIGHT_MODE || stored === DARK_MODE || stored === AUTO_MODE
+		? stored
+		: DEFAULT_THEME;
 }

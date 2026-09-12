@@ -6,6 +6,8 @@
     "dev": "astro dev",
     "start": "astro dev",
     "check": "astro check",
+    "test": "node --experimental-strip-types --test tests/*.test.mjs",
+    "social-image": "node scripts/generate-social-image.mjs",
     "build": "astro build && pagefind --site dist",
     "preview": "astro preview",
     "astro": "astro",

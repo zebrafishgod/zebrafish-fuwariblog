@@ -1,198 +1,178 @@
 <script lang="ts">
-import I18nKey from "@i18n/i18nKey";
-import { i18n } from "@i18n/translation";
-import Icon from "@iconify/svelte";
-import { url } from "@utils/url-utils.ts";
-import { onMount } from "svelte";
-import type { SearchResult } from "@/global";
+import { onMount, tick } from "svelte";
+import { url } from "../utils/url-utils";
 
-let keywordDesktop = "";
-let keywordMobile = "";
-let result: SearchResult[] = [];
-let isSearching = false;
-let pagefindLoaded = false;
-let initialized = false;
-
-const fakeResult: SearchResult[] = [
-	{
-		url: url("/"),
-		meta: {
-			title: "This Is a Fake Search Result",
-		},
-		excerpt:
-			"Because the search cannot work in the <mark>dev</mark> environment.",
-	},
-	{
-		url: url("/"),
-		meta: {
-			title: "If You Want to Test the Search",
-		},
-		excerpt: "Try running <mark>npm build && npm preview</mark> instead.",
-	},
-];
-
-const togglePanel = () => {
-	const panel = document.getElementById("search-panel");
-	panel?.classList.toggle("float-panel-closed");
+type Result = { url: string; meta: { title: string }; excerpt: string };
+type IndexPost = {
+	url: string;
+	title: string;
+	description: string;
+	tags: string[];
+	category: string;
 };
-
-const setPanelVisibility = (show: boolean, isDesktop: boolean): void => {
-	const panel = document.getElementById("search-panel");
-	if (!panel || !isDesktop) return;
-
-	if (show) {
-		panel.classList.remove("float-panel-closed");
-	} else {
-		panel.classList.add("float-panel-closed");
-	}
+type Pagefind = {
+	search: (
+		query: string,
+	) => Promise<{ results: { data: () => Promise<Result> }[] }>;
 };
-
-const search = async (keyword: string, isDesktop: boolean): Promise<void> => {
-	if (!keyword) {
-		setPanelVisibility(false, isDesktop);
-		result = [];
-		return;
-	}
-
-	if (!initialized) {
-		return;
-	}
-
-	isSearching = true;
-
+export let label = "搜尋文章";
+let dialog: HTMLDialogElement;
+let input: HTMLInputElement;
+let query = "";
+let results: Result[] = [];
+let busy = false;
+let error = "";
+let fallback = false;
+let sequence = 0;
+let timer: ReturnType<typeof setTimeout>;
+let engine: Promise<Pagefind> | undefined;
+let index: Promise<IndexPost[]> | undefined;
+let previousFocus: HTMLElement | null = null;
+function plainText(value: string) {
+	return (
+		new DOMParser().parseFromString(value, "text/html").body.textContent || ""
+	);
+}
+async function open() {
+	previousFocus = document.activeElement as HTMLElement;
+	dialog.showModal();
+	await tick();
+	input.focus();
+	if (query.trim()) schedule(query);
+}
+function close() {
+	sequence++;
+	clearTimeout(timer);
+	busy = false;
+	dialog?.close();
+	previousFocus?.focus();
+}
+async function search(value: string, token: number) {
 	try {
-		let searchResults: SearchResult[] = [];
-
-		if (import.meta.env.PROD && pagefindLoaded && window.pagefind) {
-			const response = await window.pagefind.search(keyword);
-			searchResults = await Promise.all(
-				response.results.map((item) => item.data()),
+		let found: Result[];
+		let usingFallback = false;
+		try {
+			if (import.meta.env.DEV)
+				throw new Error("Use local metadata in development");
+			engine ??= import(/* @vite-ignore */ url("/pagefind/pagefind.js"));
+			const response = await (await engine).search(value);
+			found = await Promise.all(
+				response.results.slice(0, 8).map((item) => item.data()),
 			);
-		} else if (import.meta.env.DEV) {
-			searchResults = fakeResult;
-		} else {
-			searchResults = [];
-			console.error("Pagefind is not available in production environment.");
+			found = found.map((item) => ({
+				...item,
+				excerpt: plainText(item.excerpt),
+			}));
+		} catch {
+			usingFallback = true;
+			index ??= fetch(url("/search-index.json"))
+				.then((response) => {
+					if (!response.ok) throw new Error("Index unavailable");
+					return response.json();
+				})
+				.catch((failure) => {
+					index = undefined;
+					throw failure;
+				});
+			const terms = value.normalize("NFKC").toLocaleLowerCase().split(/\s+/);
+			found = (await index)
+				.filter((post) => {
+					const text = [
+						post.title,
+						post.description,
+						post.category,
+						...post.tags,
+					]
+						.join(" ")
+						.normalize("NFKC")
+						.toLocaleLowerCase();
+					return terms.every((term) => text.includes(term));
+				})
+				.slice(0, 8)
+				.map((post) => ({
+					url: post.url,
+					meta: { title: post.title },
+					excerpt: post.description,
+				}));
 		}
-
-		result = searchResults;
-		setPanelVisibility(result.length > 0, isDesktop);
-	} catch (error) {
-		console.error("Search error:", error);
-		result = [];
-		setPanelVisibility(false, isDesktop);
+		if (token !== sequence) return;
+		results = found;
+		fallback = usingFallback;
+	} catch {
+		if (token === sequence) error = "搜尋暫時無法使用，請重試或前往文章探索。";
 	} finally {
-		isSearching = false;
+		if (token === sequence) busy = false;
 	}
-};
-
+}
+function schedule(value: string) {
+	query = value;
+	const token = ++sequence;
+	clearTimeout(timer);
+	results = [];
+	error = "";
+	fallback = false;
+	busy = !!query.trim();
+	if (query.trim()) timer = setTimeout(() => search(query.trim(), token), 180);
+}
 onMount(() => {
-	const initializeSearch = () => {
-		initialized = true;
-		pagefindLoaded =
-			typeof window !== "undefined" &&
-			!!window.pagefind &&
-			typeof window.pagefind.search === "function";
-		console.log("Pagefind status on init:", pagefindLoaded);
-		if (keywordDesktop) search(keywordDesktop, true);
-		if (keywordMobile) search(keywordMobile, false);
+	const shortcut = (event: KeyboardEvent) => {
+		if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "k") {
+			event.preventDefault();
+			if (dialog.open) close();
+			else open();
+		}
 	};
-
-	if (import.meta.env.DEV) {
-		console.log(
-			"Pagefind is not available in development mode. Using mock data.",
-		);
-		initializeSearch();
-	} else {
-		document.addEventListener("pagefindready", () => {
-			console.log("Pagefind ready event received.");
-			initializeSearch();
-		});
-		document.addEventListener("pagefindloaderror", () => {
-			console.warn(
-				"Pagefind load error event received. Search functionality will be limited.",
-			);
-			initializeSearch(); // Initialize with pagefindLoaded as false
-		});
-
-		// Fallback in case events are not caught or pagefind is already loaded by the time this script runs
-		setTimeout(() => {
-			if (!initialized) {
-				console.log("Fallback: Initializing search after timeout.");
-				initializeSearch();
-			}
-		}, 2000); // Adjust timeout as needed
-	}
+	const navigating = () => {
+		if (dialog.open) close();
+	};
+	window.addEventListener("keydown", shortcut);
+	document.addEventListener("swup:visit:start", navigating);
+	return () => {
+		sequence++;
+		clearTimeout(timer);
+		window.removeEventListener("keydown", shortcut);
+		document.removeEventListener("swup:visit:start", navigating);
+	};
 });
-
-$: if (initialized && keywordDesktop) {
-	(async () => {
-		await search(keywordDesktop, true);
-	})();
-}
-
-$: if (initialized && keywordMobile) {
-	(async () => {
-		await search(keywordMobile, false);
-	})();
-}
 </script>
 
-<!-- search bar for desktop view -->
-<div id="search-bar" class="hidden lg:flex transition-all items-center h-11 mr-2 rounded-lg
-      bg-black/[0.04] hover:bg-black/[0.06] focus-within:bg-black/[0.06]
-      dark:bg-white/5 dark:hover:bg-white/10 dark:focus-within:bg-white/10
-">
-    <Icon icon="material-symbols:search" class="absolute text-[1.25rem] pointer-events-none ml-3 transition my-auto text-black/30 dark:text-white/30"></Icon>
-    <input placeholder="{i18n(I18nKey.search)}" bind:value={keywordDesktop} on:focus={() => search(keywordDesktop, true)}
-           class="transition-all pl-10 text-sm bg-transparent outline-0
-         h-full w-40 active:w-60 focus:w-60 text-black/50 dark:text-white/50"
-    >
-</div>
-
-<!-- toggle btn for phone/tablet view -->
-<button on:click={togglePanel} aria-label="Search Panel" id="search-switch"
-        class="btn-plain scale-animation lg:!hidden rounded-lg w-11 h-11 active:scale-90">
-    <Icon icon="material-symbols:search" class="text-[1.25rem]"></Icon>
+<button class="search-trigger btn-plain rounded-lg h-11" on:click={open} aria-label={label} aria-haspopup="dialog">
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></svg>
+  <span>搜尋</span><kbd>⌘ / Ctrl K</kbd>
 </button>
-
-<!-- search panel -->
-<div id="search-panel" class="float-panel float-panel-closed search-panel absolute md:w-[30rem]
-top-20 left-4 md:left-[unset] right-4 shadow-2xl rounded-2xl p-2">
-
-    <!-- search bar inside panel for phone/tablet -->
-    <div id="search-bar-inside" class="flex relative lg:hidden transition-all items-center h-11 rounded-xl
-      bg-black/[0.04] hover:bg-black/[0.06] focus-within:bg-black/[0.06]
-      dark:bg-white/5 dark:hover:bg-white/10 dark:focus-within:bg-white/10
-  ">
-        <Icon icon="material-symbols:search" class="absolute text-[1.25rem] pointer-events-none ml-3 transition my-auto text-black/30 dark:text-white/30"></Icon>
-        <input placeholder="Search" bind:value={keywordMobile}
-               class="pl-10 absolute inset-0 text-sm bg-transparent outline-0
-               focus:w-60 text-black/50 dark:text-white/50"
-        >
-    </div>
-
-    <!-- search results -->
-    {#each result as item}
-        <a href={item.url}
-           class="transition first-of-type:mt-2 lg:first-of-type:mt-0 group block
-       rounded-xl text-lg px-3 py-2 hover:bg-[var(--btn-plain-bg-hover)] active:bg-[var(--btn-plain-bg-active)]">
-            <div class="transition text-90 inline-flex font-bold group-hover:text-[var(--primary)]">
-                {item.meta.title}<Icon icon="fa6-solid:chevron-right" class="transition text-[0.75rem] translate-x-1 my-auto text-[var(--primary)]"></Icon>
-            </div>
-            <div class="transition text-sm text-50">
-                {@html item.excerpt}
-            </div>
-        </a>
+<dialog bind:this={dialog} class="search-dialog" aria-labelledby="search-title" on:cancel={() => close()}>
+  <div class="search-dialog-heading"><h2 id="search-title">搜尋文章</h2><button class="tool-button" on:click={close} aria-label="關閉搜尋">Esc ×</button></div>
+  <label class="search-input-label" for="site-search">輸入關鍵字</label>
+  <input bind:this={input} id="site-search" type="search" placeholder="搜尋標題、內容與標籤…" value={query} on:input={event => schedule(event.currentTarget.value)} autocomplete="off"/>
+  <div role="status" class="search-status">
+    {#if busy}正在搜尋…{:else if error}{error}{:else if !query.trim()}從一個關鍵字開始。使用 Tab 選擇結果，Enter 開啟文章。{:else if !results.length}沒有找到符合「{query}」的文章，試試其他關鍵字。{:else}顯示 {results.length} 筆結果{/if}
+    {#if fallback}<span>目前搜尋標題、摘要與標籤。</span>{/if}
+  </div>
+  <ul class="search-results">
+    {#each results as item}
+      <li><a href={item.url} on:click={close}><strong>{item.meta.title}<span aria-hidden="true">↗</span></strong><p>{item.excerpt}</p></a></li>
     {/each}
-</div>
-
+  </ul>
+  <a class="search-all" href={url("/archive/")} on:click={close}>瀏覽全部文章 →</a>
+</dialog>
 <style>
-  input:focus {
-    outline: 0;
-  }
-  .search-panel {
-    max-height: calc(100vh - 100px);
-    overflow-y: auto;
-  }
+.search-trigger { display:flex; gap:.5rem; padding:0 .65rem; color:var(--text-muted); }
+.search-trigger span { font-size:.8rem; }
+kbd { font: .6rem monospace; border:1px solid var(--outline); border-radius:.25rem; padding:.2rem .3rem; }
+.search-dialog { width:min(40rem, calc(100vw - 2rem)); max-height:80dvh; margin:12dvh auto auto; padding:1.5rem; border:1px solid var(--outline); border-radius:1rem; color:var(--text-strong); background:var(--card-bg); box-shadow:0 24px 80px #00152655; overflow:auto; }
+.search-dialog::backdrop { background:#071c32a6; backdrop-filter:blur(5px); }
+.search-dialog-heading { display:flex; justify-content:space-between; align-items:center; margin-bottom:1.25rem; }
+h2 { font-size:1.2rem; font-weight:700; }
+.search-input-label { display:block; font-size:.75rem; margin-bottom:.4rem; color:var(--text-muted); }
+input { width:100%; background:var(--page-bg); border:1px solid var(--outline); padding:.85rem 1rem; border-radius:.5rem; font-size:1rem; }
+.search-status { color:var(--text-muted); font-size:.8rem; padding:1rem 0; line-height:1.7; }
+.search-status span { display:block; }
+.search-results a { display:block; border-top:1px solid var(--outline); padding:1rem .4rem; border-radius:.3rem; }
+.search-results a:hover { background:var(--btn-regular-bg); }
+.search-results strong { display:flex; justify-content:space-between; gap:1rem; }
+.search-results strong span { color:var(--btn-content); }
+.search-results p { color:var(--text-muted); font-size:.85rem; line-height:1.7; margin-top:.4rem; }
+.search-all { display:block; padding-top:1rem; border-top:1px solid var(--outline); color:var(--btn-content); font-size:.8rem; }
+@media(max-width:1199px) { kbd {display:none;} }
+@media(max-width:767px) { .search-trigger span {display:none;} .search-dialog {padding:1rem;} }
 </style>

@@ -21,22 +21,24 @@ export async function GET(context: APIContext) {
 
 	return rss({
 		title: siteConfig.title,
-		description: siteConfig.subtitle || "No description",
-		site: context.site ?? "https://fuwari.vercel.app",
-		items: blog.map((post) => {
-			const content =
-				typeof post.body === "string" ? post.body : String(post.body || "");
-			const cleanedContent = stripInvalidXmlChars(content);
-			return {
-				title: post.data.title,
-				pubDate: post.data.published,
-				description: post.data.description || "",
-				link: url(`/posts/${post.slug}/`),
-				content: sanitizeHtml(parser.render(cleanedContent), {
-					allowedTags: sanitizeHtml.defaults.allowedTags.concat(["img"]),
-				}),
-			};
-		}),
-		customData: `<language>${siteConfig.lang}</language>`,
+		description: siteConfig.description,
+		site: context.site ?? siteConfig.url,
+		items: blog
+			.filter((post) => !post.data.draft)
+			.map((post) => {
+				const content =
+					typeof post.body === "string" ? post.body : String(post.body || "");
+				const cleanedContent = stripInvalidXmlChars(content);
+				return {
+					title: post.data.title,
+					pubDate: post.data.published,
+					description: post.data.description || "",
+					link: url(`/posts/${post.slug}/`),
+					content: sanitizeHtml(parser.render(cleanedContent), {
+						allowedTags: sanitizeHtml.defaults.allowedTags.concat(["img"]),
+					}),
+				};
+			}),
+		customData: `<language>${siteConfig.lang.replace("_", "-")}</language>`,
 	});
 }

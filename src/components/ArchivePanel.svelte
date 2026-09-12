@@ -1,151 +1,114 @@
 <script lang="ts">
-import { onMount } from "svelte";
-
-import I18nKey from "../i18n/i18nKey";
-import { i18n } from "../i18n/translation";
+import { onMount, tick } from "svelte";
+import {
+	type DiscoverPost,
+	filterPosts,
+	parsePostFilters,
+} from "../utils/post-filter";
+import { BOOKMARK_EVENT, readBookmarks } from "../utils/preferences";
 import { getPostUrlBySlug } from "../utils/url-utils";
+import BookmarkButton from "./BookmarkButton.svelte";
 
-export let tags: string[];
-export let categories: string[];
-export let sortedPosts: Post[] = [];
+export let sortedPosts: DiscoverPost[] = [];
+let filters = parsePostFilters(new URLSearchParams());
+let bookmarks: string[] = [];
+let ready = false;
+$: categoryOptions = [
+	...new Set(
+		sortedPosts
+			.map((post) => post.data.category?.trim())
+			.filter((value): value is string => !!value),
+	),
+].sort();
+$: tagOptions = [
+	...new Set(sortedPosts.flatMap((post) => post.data.tags)),
+].sort();
+$: filtered = filterPosts(sortedPosts, filters, bookmarks);
 
-const params = new URLSearchParams(window.location.search);
-tags = params.has("tag") ? params.getAll("tag") : [];
-categories = params.has("category") ? params.getAll("category") : [];
-const uncategorized = params.get("uncategorized");
-
-interface Post {
-	slug: string;
-	data: {
-		title: string;
-		tags: string[];
-		category?: string;
-		published: Date;
+async function syncUrl() {
+	await tick();
+	const address = new URL(window.location.href);
+	for (const name of ["q", "category", "tag", "saved", "sort", "uncategorized"])
+		address.searchParams.delete(name);
+	if (filters.query.trim()) address.searchParams.set("q", filters.query.trim());
+	for (const category of filters.categories)
+		address.searchParams.append("category", category);
+	for (const tag of filters.tags) address.searchParams.append("tag", tag);
+	if (filters.saved) address.searchParams.set("saved", "true");
+	if (filters.uncategorized) address.searchParams.set("uncategorized", "true");
+	if (filters.sort !== "newest") address.searchParams.set("sort", filters.sort);
+	window.history.replaceState(window.history.state, "", address);
+	window.dispatchEvent(new Event("zebrafish:navigation"));
+}
+function toggleTag(tag: string) {
+	filters.tags = filters.tags.includes(tag)
+		? filters.tags.filter((item) => item !== tag)
+		: [...filters.tags, tag];
+	syncUrl();
+}
+function reset() {
+	filters = parsePostFilters(new URLSearchParams());
+	syncUrl();
+}
+onMount(() => {
+	const updateBookmarks = () => {
+		bookmarks = readBookmarks();
 	};
-}
-
-interface Group {
-	year: number;
-	posts: Post[];
-}
-
-let groups: Group[] = [];
-
-function formatDate(date: Date) {
-	const month = (date.getMonth() + 1).toString().padStart(2, "0");
-	const day = date.getDate().toString().padStart(2, "0");
-	return `${month}-${day}`;
-}
-
-function formatTag(tagList: string[]) {
-	return tagList.map((t) => `#${t}`).join(" ");
-}
-
-onMount(async () => {
-	let filteredPosts: Post[] = sortedPosts;
-
-	if (tags.length > 0) {
-		filteredPosts = filteredPosts.filter(
-			(post) =>
-				Array.isArray(post.data.tags) &&
-				post.data.tags.some((tag) => tags.includes(tag)),
-		);
-	}
-
-	if (categories.length > 0) {
-		filteredPosts = filteredPosts.filter(
-			(post) => post.data.category && categories.includes(post.data.category),
-		);
-	}
-
-	if (uncategorized) {
-		filteredPosts = filteredPosts.filter((post) => !post.data.category);
-	}
-
-	const grouped = filteredPosts.reduce(
-		(acc, post) => {
-			const year = post.data.published.getFullYear();
-			if (!acc[year]) {
-				acc[year] = [];
-			}
-			acc[year].push(post);
-			return acc;
-		},
-		{} as Record<number, Post[]>,
-	);
-
-	const groupedPostsArray = Object.keys(grouped).map((yearStr) => ({
-		year: Number.parseInt(yearStr, 10),
-		posts: grouped[Number.parseInt(yearStr, 10)],
-	}));
-
-	groupedPostsArray.sort((a, b) => b.year - a.year);
-
-	groups = groupedPostsArray;
+	const updateFilters = () => {
+		filters = parsePostFilters(new URLSearchParams(window.location.search));
+	};
+	updateFilters();
+	updateBookmarks();
+	ready = true;
+	window.addEventListener(BOOKMARK_EVENT, updateBookmarks);
+	window.addEventListener("storage", updateBookmarks);
+	window.addEventListener("popstate", updateFilters);
+	return () => {
+		window.removeEventListener(BOOKMARK_EVENT, updateBookmarks);
+		window.removeEventListener("storage", updateBookmarks);
+		window.removeEventListener("popstate", updateFilters);
+	};
 });
+function dateLabel(value: Date | string) {
+	return new Intl.DateTimeFormat("zh-TW", {
+		year: "numeric",
+		month: "short",
+		day: "numeric",
+		timeZone: "UTC",
+	}).format(new Date(value));
+}
 </script>
 
-<div class="card-base px-8 py-6">
-    {#each groups as group}
-        <div>
-            <div class="flex flex-row w-full items-center h-[3.75rem]">
-                <div class="w-[15%] md:w-[10%] transition text-2xl font-bold text-right text-75">
-                    {group.year}
-                </div>
-                <div class="w-[15%] md:w-[10%]">
-                    <div
-                            class="h-3 w-3 bg-none rounded-full outline outline-[var(--primary)] mx-auto
-                  -outline-offset-[2px] z-50 outline-3"
-                    ></div>
-                </div>
-                <div class="w-[70%] md:w-[80%] transition text-left text-50">
-                    {group.posts.length} {i18n(group.posts.length === 1 ? I18nKey.postCount : I18nKey.postsCount)}
-                </div>
-            </div>
-
-            {#each group.posts as post}
-                <a
-                        href={getPostUrlBySlug(post.slug)}
-                        aria-label={post.data.title}
-                        class="group btn-plain !block h-10 w-full rounded-lg hover:text-[initial]"
-                >
-                    <div class="flex flex-row justify-start items-center h-full">
-                        <!-- date -->
-                        <div class="w-[15%] md:w-[10%] transition text-sm text-right text-50">
-                            {formatDate(post.data.published)}
-                        </div>
-
-                        <!-- dot and line -->
-                        <div class="w-[15%] md:w-[10%] relative dash-line h-full flex items-center">
-                            <div
-                                    class="transition-all mx-auto w-1 h-1 rounded group-hover:h-5
-                       bg-[oklch(0.5_0.05_var(--hue))] group-hover:bg-[var(--primary)]
-                       outline outline-4 z-50
-                       outline-[var(--card-bg)]
-                       group-hover:outline-[var(--btn-plain-bg-hover)]
-                       group-active:outline-[var(--btn-plain-bg-active)]"
-                            ></div>
-                        </div>
-
-                        <!-- post title -->
-                        <div
-                                class="w-[70%] md:max-w-[65%] md:w-[65%] text-left font-bold
-                     group-hover:translate-x-1 transition-all group-hover:text-[var(--primary)]
-                     text-75 pr-8 whitespace-nowrap overflow-ellipsis overflow-hidden"
-                        >
-                            {post.data.title}
-                        </div>
-
-                        <!-- tag list -->
-                        <div
-                                class="hidden md:block md:w-[15%] text-left text-sm transition
-                     whitespace-nowrap overflow-ellipsis overflow-hidden text-30"
-                        >
-                            {formatTag(post.data.tags)}
-                        </div>
-                    </div>
-                </a>
-            {/each}
-        </div>
+<section class="card-base archive-panel" aria-labelledby="archive-title">
+  <p class="eyebrow">EXPLORE THE ARCHIVE</p>
+  <h1 id="archive-title">{filters.saved ? "稍後閱讀" : "文章探索"}</h1>
+  <p class="section-description">{filters.saved ? "收藏感興趣的文章，留給下一次靜心閱讀。收藏只儲存在此瀏覽器。" : "從一個關鍵字出發，找到下一篇值得閱讀的文章。"}</p>
+  <div class="archive-controls">
+    <label class="search-field"><span>搜尋文章</span><input type="search" placeholder="標題、摘要或標籤…" bind:value={filters.query} on:input={syncUrl} disabled={!ready}/></label>
+    <label><span>分類</span><select value={filters.uncategorized ? "__uncategorized" : (filters.categories[0] || "")} disabled={!ready} on:change={(event) => { const value = event.currentTarget.value; filters.categories = value && value !== "__uncategorized" ? [value] : []; filters.uncategorized = value === "__uncategorized"; syncUrl(); }}>
+      <option value="">全部分類</option>{#each categoryOptions as category}<option value={category}>{category}</option>{/each}<option value="__uncategorized">未分類</option>
+    </select></label>
+    <label><span>排序</span><select bind:value={filters.sort} on:change={syncUrl} disabled={!ready}><option value="newest">最新優先</option><option value="oldest">最早優先</option><option value="title">依標題</option></select></label>
+  </div>
+  <div class="tag-filters" aria-label="依標籤篩選，可選多個">
+    {#each tagOptions as tag}<button class="filter-chip" aria-pressed={filters.tags.includes(tag)} disabled={!ready} on:click={() => toggleTag(tag)}># {tag}</button>{/each}
+  </div>
+  <div class="archive-summary">
+    <p role="status">找到 <strong>{filtered.length}</strong> 篇文章</p>
+    <label class="saved-filter"><input type="checkbox" bind:checked={filters.saved} on:change={syncUrl} disabled={!ready}/> 只看收藏</label>
+    <button class="reset-filter" on:click={reset} disabled={!ready}>清除篩選</button>
+  </div>
+  <noscript><p class="section-description">以下為全部文章；啟用 JavaScript 即可使用篩選與收藏。</p></noscript>
+  <div class="archive-results">
+    {#each filtered as post (post.slug)}
+      <article class="archive-item">
+        <div class="archive-item-meta"><time datetime={new Date(post.data.published).toISOString()}>{dateLabel(post.data.published)}</time><span>{post.data.category || "未分類"}</span></div>
+        <h2><a href={getPostUrlBySlug(post.slug)}>{post.data.title}<span aria-hidden="true">↗</span></a></h2>
+        {#if post.data.description}<p>{post.data.description}</p>{/if}
+        <div class="archive-item-bottom"><div class="archive-item-tags">{#each post.data.tags as tag}<button on:click={() => toggleTag(tag)} disabled={!ready}>#{tag}</button>{/each}</div><BookmarkButton slug={post.slug} title={post.data.title}/></div>
+      </article>
+    {:else}
+      <div class="empty-state"><span aria-hidden="true">⌕</span><h2>{filters.saved ? "還沒有符合條件的收藏" : "暫時沒有找到文章"}</h2><p>{filters.saved ? "在文章旁點選「稍後閱讀」，或放寬篩選條件。" : "試試更短的關鍵字，或清除分類與標籤。"}</p><button class="tool-button" on:click={reset}>瀏覽所有文章 →</button></div>
     {/each}
-</div>
+  </div>
+</section>

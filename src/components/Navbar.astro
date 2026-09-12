@@ -2,140 +2,82 @@
 import { Icon } from "astro-icon/components";
 import { navBarConfig, siteConfig } from "../config";
 import { LinkPresets } from "../constants/link-presets";
-import { LinkPreset, type NavBarLink } from "../types/config";
+import type { NavBarLink } from "../types/config";
 import { url } from "../utils/url-utils";
 import LightDarkSwitch from "./LightDarkSwitch.svelte";
 import Search from "./Search.svelte";
 import DisplaySettings from "./widget/DisplaySettings.svelte";
-import NavMenuPanel from "./widget/NavMenuPanel.astro";
 
-const className = Astro.props.class;
-
-let links: NavBarLink[] = navBarConfig.links.map(
-	(item: NavBarLink | LinkPreset): NavBarLink => {
-		if (typeof item === "number") {
-			return LinkPresets[item];
-		}
-		return item;
-	},
+const links: NavBarLink[] = navBarConfig.links.map((item) =>
+	typeof item === "number" ? LinkPresets[item] : item,
 );
 ---
 <div id="navbar" class="z-50 onload-animation">
-    <div class="absolute h-8 left-0 right-0 -top-8 bg-[var(--card-bg)] transition"></div> <!-- used for onload animation -->
-    <div class:list={[
-        className,
-        "card-base !overflow-visible max-w-[var(--page-width)] h-[4.5rem] !rounded-t-none mx-auto flex items-center justify-between px-4"]}>
-        <a href={url('/')} class="btn-plain scale-animation rounded-lg h-[3.25rem] px-5 font-bold active:scale-95">
-            <div class="flex flex-row text-[var(--primary)] items-center text-md">
-                <Icon name="material-symbols:home-outline-rounded" class="text-[1.75rem] mb-1 mr-2" />
-                {siteConfig.title}
-            </div>
-        </a>
-        <div class="hidden md:flex">
-            {links.map((l) => {
-                return <a aria-label={l.name} href={l.external ? l.url : url(l.url)} target={l.external ? "_blank" : null}
-                          class="btn-plain scale-animation rounded-lg h-11 font-bold px-5 active:scale-95"
-                >
-                    <div class="flex items-center">
-                        {l.name}
-                        {l.external && <Icon name="fa6-solid:arrow-up-right-from-square" class="text-[0.875rem] transition -translate-y-[1px] ml-1 text-black/[0.2] dark:text-white/[0.2]"></Icon>}
-                    </div>
-                </a>;
-            })}
-        </div>
-        <div class="flex">
-            <!--<SearchPanel client:load>-->
-            <Search client:only="svelte"></Search>
-            {!siteConfig.themeColor.fixed && (
-                    <button aria-label="Display Settings" class="btn-plain scale-animation rounded-lg h-11 w-11 active:scale-90" id="display-settings-switch">
-                        <Icon name="material-symbols:palette-outline" class="text-[1.25rem]"></Icon>
-                    </button>
-            )}
-            <LightDarkSwitch client:only="svelte"></LightDarkSwitch>
-            <button aria-label="Menu" name="Nav Menu" class="btn-plain scale-animation rounded-lg w-11 h-11 active:scale-90 md:!hidden" id="nav-menu-switch">
-                <Icon name="material-symbols:menu-rounded" class="text-[1.25rem]"></Icon>
-            </button>
-        </div>
-        <NavMenuPanel links={links}></NavMenuPanel>
-        <DisplaySettings client:only="svelte"></DisplaySettings>
+  <div class="card-base !overflow-visible max-w-[var(--page-width)] h-[4.5rem] !rounded-t-none mx-auto flex items-center justify-between px-3 md:px-4 gap-2">
+    <a href={url("/")} class="brand-link" aria-label="Zebrafish 首頁"><img src={url("/favicon/zebrafish.svg")} width="30" height="30" alt=""/><span>{siteConfig.title}</span></a>
+    <nav class="primary-nav desktop-nav" aria-label="主要導覽">
+      {links.map(link => <a href={link.external ? link.url : url(link.url)} target={link.external ? "_blank" : undefined} rel={link.external ? "noopener noreferrer" : undefined}>{link.name}{link.external && <span aria-hidden="true"> ↗</span>}</a>)}
+    </nav>
+    <div class="flex items-center">
+      <Search client:load/>
+      {!siteConfig.themeColor.fixed && <button aria-label="調整主題色彩" aria-expanded="false" aria-controls="display-setting" class="btn-plain rounded-lg h-11 w-11" id="display-settings-switch"><Icon name="material-symbols:palette-outline" class="text-xl"/></button>}
+      <LightDarkSwitch client:load label="切換色彩模式"/>
+      <button aria-label="開啟導覽選單" aria-expanded="false" aria-controls="nav-menu-panel" class="btn-plain rounded-lg w-11 h-11 lg:!hidden" id="nav-menu-switch"><Icon name="material-symbols:menu-rounded" class="text-xl"/></button>
     </div>
+    <nav id="nav-menu-panel" aria-label="行動版導覽" class="primary-nav mobile-nav float-panel float-panel-closed" inert>
+      {links.map(link => <a href={link.external ? link.url : url(link.url)} target={link.external ? "_blank" : undefined} rel={link.external ? "noopener noreferrer" : undefined}>{link.name}<span aria-hidden="true">↗</span></a>)}
+    </nav>
+    <DisplaySettings client:only="svelte"/>
+  </div>
 </div>
-
 <script>
-function switchTheme() {
-    if (localStorage.theme === 'dark') {
-        document.documentElement.classList.remove('dark');
-        localStorage.theme = 'light';
-    } else {
-        document.documentElement.classList.add('dark');
-        localStorage.theme = 'dark';
-    }
+function setPanel(id: string, buttonId: string, open: boolean) {
+  const panel = document.getElementById(id);
+  panel?.classList.toggle("float-panel-closed", !open);
+  if (panel) panel.inert = !open;
+  document.getElementById(buttonId)?.setAttribute("aria-expanded", String(open));
 }
-
-function loadButtonScript() {
-    let switchBtn = document.getElementById("scheme-switch");
-    if (switchBtn) {
-        switchBtn.onclick = function () {
-            switchTheme()
-        };
-    }
-
-    let settingBtn = document.getElementById("display-settings-switch");
-    if (settingBtn) {
-        settingBtn.onclick = function () {
-            let settingPanel = document.getElementById("display-setting");
-            if (settingPanel) {
-                settingPanel.classList.toggle("float-panel-closed");
-            }
-        };
-    }
-
-    let menuBtn = document.getElementById("nav-menu-switch");
-    if (menuBtn) {
-        menuBtn.onclick = function () {
-            let menuPanel = document.getElementById("nav-menu-panel");
-            if (menuPanel) {
-                menuPanel.classList.toggle("float-panel-closed");
-            }
-        };
-    }
+function closePanels() {
+  setPanel("nav-menu-panel", "nav-menu-switch", false);
+  setPanel("display-setting", "display-settings-switch", false);
 }
-
-loadButtonScript();
+for (const [buttonId, panelId] of [["nav-menu-switch", "nav-menu-panel"], ["display-settings-switch", "display-setting"]]) {
+  document.getElementById(buttonId)?.addEventListener("click", () => {
+    const open = document.getElementById(buttonId)?.getAttribute("aria-expanded") !== "true";
+    closePanels(); setPanel(panelId, buttonId, open);
+  });
+}
+document.addEventListener("click", event => {
+  if (!(event.target instanceof Element)) return;
+  if (!event.target.closest("#nav-menu-panel, #nav-menu-switch, #display-setting, #display-settings-switch")) closePanels();
+  if (event.target.closest("#nav-menu-panel a")) closePanels();
+});
+document.addEventListener("keydown", event => {
+  if (event.key !== "Escape") return;
+  const active = document.querySelector<HTMLButtonElement>('#navbar button[aria-expanded="true"]');
+  closePanels(); active?.focus();
+});
+function updateNavigation() {
+  const current = new URL(location.href);
+  document.querySelectorAll<HTMLAnchorElement>(".primary-nav a").forEach(link => {
+    const target = new URL(link.href);
+    const selected = target.origin === current.origin && target.pathname.replace(/\/$/, "") === current.pathname.replace(/\/$/, "") && (target.searchParams.get("saved") === "true") === (current.searchParams.get("saved") === "true");
+    if (selected) link.setAttribute("aria-current", "page"); else link.removeAttribute("aria-current");
+  });
+  closePanels();
+}
+updateNavigation();
+window.addEventListener("popstate", updateNavigation);
+window.addEventListener("zebrafish:navigation", updateNavigation);
+document.addEventListener("swup:page:view", updateNavigation);
 </script>
-
-{import.meta.env.PROD && <script is:inline define:vars={{scriptUrl: url('/pagefind/pagefind.js')}}>
-async function loadPagefind() {
-    try {
-        const response = await fetch(scriptUrl, { method: 'HEAD' });
-        if (!response.ok) {
-            throw new Error(`Pagefind script not found: ${response.status}`);
-        }
-
-        const pagefind = await import(scriptUrl);
-
-        await pagefind.options({
-            excerptLength: 20
-        });
-
-        window.pagefind = pagefind;
-
-        document.dispatchEvent(new CustomEvent('pagefindready'));
-        console.log('Pagefind loaded and initialized successfully, event dispatched.');
-    } catch (error) {
-        console.error('Failed to load Pagefind:', error);
-        window.pagefind = {
-            search: () => Promise.resolve({ results: [] }),
-            options: () => Promise.resolve(),
-        };
-        document.dispatchEvent(new CustomEvent('pagefindloaderror'));
-        console.log('Pagefind load error, event dispatched.');
-    }
-}
-
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', loadPagefind);
-} else {
-    loadPagefind();
-}
-</script>}
+<style>
+.brand-link { display:flex; align-items:center; gap:.6rem; font-size:1.05rem; font-weight:700; letter-spacing:-.025em; color:var(--text-strong); flex-shrink:0; }
+.desktop-nav { display:none; gap:.15rem; }
+.primary-nav a { font-size:.8rem; font-weight:500; border-radius:.5rem; color:var(--text-muted); padding:.75rem .8rem; }
+.primary-nav a:hover { background:var(--btn-regular-bg); color:var(--btn-content); }
+.mobile-nav { position:absolute; top:5rem; right:1rem; min-width:14rem; padding:.5rem; }
+.mobile-nav a { display:flex; justify-content:space-between; gap:2rem; }
+@media(min-width:1024px) { .desktop-nav {display:flex;} .mobile-nav {display:none;} }
+@media(max-width:374px) { .brand-link {font-size:.95rem; gap:.3rem;} .brand-link img {width:25px; height:25px;} }
+</style>
