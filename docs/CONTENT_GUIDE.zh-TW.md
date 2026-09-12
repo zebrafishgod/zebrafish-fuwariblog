@@ -5,8 +5,9 @@
 ## 一、先在本機預覽
 
 ```bash
+cd "C:\Users\ROG\Documents\ChatGPT\zebrafish-fuwariblog"
 pnpm install
-pnpm dev
+pnpm run dev
 ```
 
 瀏覽 `http://localhost:4321/`。修改檔案後，瀏覽器通常會自動更新。完成後建議執行：
@@ -86,6 +87,20 @@ src/content/posts/my-first-post/
 - favicon：`public/favicon/zebrafish.svg`。
 
 如果替換分享圖，檔名不變即可；網站會自動把它用於 Open Graph 和 Twitter 卡片。
+
+### 首頁 Banner
+
+首頁目前使用 Fuwari 風格的寬幅圖片 Banner。設定位於 `src/config.ts`：
+
+```ts
+banner: {
+  enable: true,
+  src: "assets/images/demo-banner.png",
+  position: "center", // 可選 top、center、bottom
+}
+```
+
+把新的 Banner 放進 `src/assets/images/` 後，修改 `src` 即可。若想暫時隱藏 Banner，將 `enable` 改為 `false`。
 
 ## 五、新增一篇文章
 

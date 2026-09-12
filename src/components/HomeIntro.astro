@@ -14,21 +14,17 @@ const [posts, categories, tags] = await Promise.all([
 	getTagList(),
 ]);
 ---
-<section class="home-intro" aria-labelledby="intro-heading">
+<section class="home-intro home-intro-compact" aria-labelledby="intro-heading">
 	<div class="intro-copy">
 		<p class="eyebrow"><span class="intro-dot"></span> ZEBRAFISH · DIGITAL GARDEN</p>
-		<h1 id="intro-heading">保持好奇，<br/>讓想法自由游動。</h1>
-		<p class="intro-description">{siteConfig.subtitle}。<br/>這裡收藏技術探索的足跡，也記錄日常裡的靈感。</p>
+		<h1 id="intro-heading">{siteConfig.title}</h1>
+		<p class="intro-description">{siteConfig.subtitle}。這裡收藏技術探索的足跡，也記錄日常裡的靈感。</p>
 		<div class="intro-actions">
 			<a class="intro-primary" href={url("/archive/")}>探索所有文章 <span aria-hidden="true">↗</span></a>
 			<a class="intro-secondary" href={url("/about/")}>認識 Zebrafish <span aria-hidden="true">→</span></a>
 		</div>
 	</div>
-	<div class="ocean-art" aria-hidden="true">
-		<div class="orbit orbit-one"></div><div class="orbit orbit-two"></div><div class="orbit orbit-three"></div>
-		<svg viewBox="0 0 220 140" class="hero-fish" fill="none"><path d="M30 70C72 11 137 11 180 70c-43 59-108 59-150 0Z" fill="#badff0"/><path d="m167 70 43-36v72Z" fill="#91c9e4"/><path d="M65 44h86M48 62h106M49 79h105M65 96h86" stroke="#447e9f" stroke-width="6" stroke-linecap="round"/><circle cx="49" cy="65" r="5" fill="#163c57"/></svg>
-		<span class="ocean-coordinate">A LITTLE FISH.<br/>AN OPEN OCEAN.</span>
-	</div>
+	<div class="ocean-art" aria-hidden="true"><span class="ocean-coordinate">A LITTLE FISH.<br/>AN OPEN OCEAN.</span></div>
 </section>
 <div class="home-stats" aria-label="博客內容統計">
 	<span><strong>{posts.length.toString().padStart(2, "0")}</strong> 篇文章</span>

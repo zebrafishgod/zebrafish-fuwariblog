@@ -7,6 +7,16 @@ html { font-family: Roboto, "Noto Sans TC", "PingFang TC", "Microsoft JhengHei",
 .skip-link:focus { top: 1rem; }
 .eyebrow { font-size: .65rem; font-weight: 700; letter-spacing: .18em; color: var(--text-muted); }
 .home-intro { background: #173d58; color: #f0f7fa; border-radius: var(--radius-large); overflow: hidden; position: relative; padding: 2.7rem 2.4rem; isolation: isolate; }
+.home-intro-compact { background: color-mix(in srgb, var(--card-bg) 92%, transparent); color: var(--text-strong); border: 1px solid var(--line-divider); padding: 1.6rem 2rem; margin-bottom: 1rem; box-shadow: 0 10px 30px #09243d12; }
+.home-intro-compact .intro-copy { max-width: 42rem; }
+.home-intro-compact .eyebrow { color: var(--btn-content); }
+.home-intro-compact .intro-dot { background: var(--primary); }
+.home-intro-compact h1 { font-size: clamp(1.6rem, 3vw, 2.25rem); margin: .55rem 0 .35rem; color: var(--text-strong); }
+.home-intro-compact .intro-description { color: var(--text-muted); max-width: 38rem; }
+.home-intro-compact .intro-primary { background: var(--btn-regular-bg); color: var(--btn-content); }
+.home-intro-compact .intro-primary:hover { background: var(--btn-regular-bg-hover); }
+.home-intro-compact .intro-secondary { color: var(--text-muted); }
+.home-intro-compact .ocean-art { width: 24%; opacity: .2; }
 .intro-copy { position: relative; z-index: 2; }
 .home-intro .eyebrow { color: #a3c6d9; display: flex; align-items: center; gap: .65rem; }
 .intro-dot { width: .4rem; height: .4rem; background: #a8dfbf; border-radius: 50%; }
