@@ -25,7 +25,7 @@ pnpm build
 ```ts
 siteConfig.title       // 網站名稱
 siteConfig.subtitle    // 首頁副標題
-siteConfig.description // SEO、分享卡片與 RSS 描述
+siteConfig.description // SEO 與分享卡片描述
 siteConfig.url         // 正式網址，務必使用 https:// 開頭
 siteConfig.lang        // 網站語言，例如 zh_TW
 ```

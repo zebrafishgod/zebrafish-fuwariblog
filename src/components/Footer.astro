@@ -7,5 +7,5 @@ import { url } from "../utils/url-utils";
     {licenseConfig.enable && <span>文章授權 <a href={licenseConfig.url} target="_blank" rel="noopener noreferrer">{licenseConfig.name}</a> · </span>}
     <span>Built with <a href="https://astro.build" target="_blank" rel="noopener noreferrer">Astro</a> &amp; <a href="https://github.com/saicaca/fuwari" target="_blank" rel="noopener noreferrer">Fuwari</a></span>
   </div>
-  <nav aria-label="頁尾導覽"><a href={url("/about/")}>關於</a><a href={url("/rss.xml")}>RSS 訂閱</a><a href={url("/sitemap-index.xml")}>網站地圖</a></nav>
+  <nav aria-label="頁尾導覽"><a href={url("/about/")}>關於</a><a href={url("/sitemap-index.xml")}>網站地圖</a></nav>
 </footer>
