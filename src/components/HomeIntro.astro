@@ -1,6 +1,5 @@
 ---
 import { Icon } from "astro-icon/components";
-import { siteConfig } from "../config";
 import {
 	getCategoryList,
 	getSortedPostsList,
@@ -14,22 +13,15 @@ const [posts, categories, tags] = await Promise.all([
 	getTagList(),
 ]);
 ---
-<section class="home-intro home-intro-compact" aria-labelledby="intro-heading">
-	<div class="intro-copy">
-		<p class="eyebrow"><span class="intro-dot"></span> ZEBRAFISH · DIGITAL GARDEN</p>
-		<h1 id="intro-heading">{siteConfig.title}</h1>
-		<p class="intro-description">{siteConfig.subtitle}。這裡收藏技術探索的足跡，也記錄日常裡的靈感。</p>
-		<div class="intro-actions">
-			<a class="intro-primary" href={url("/archive/")}>探索所有文章 <span aria-hidden="true">↗</span></a>
-			<a class="intro-secondary" href={url("/about/")}>認識 Zebrafish <span aria-hidden="true">→</span></a>
-		</div>
+<section class="home-overview" aria-labelledby="latest-heading">
+	<div class="home-overview-heading">
+		<div><p class="eyebrow">THE LATEST</p><h1 id="latest-heading">最近更新</h1></div>
+		<a class="overview-link" href={url("/archive/")}>瀏覽全部文章 <span aria-hidden="true">→</span></a>
 	</div>
-	<div class="ocean-art" aria-hidden="true"><span class="ocean-coordinate">A LITTLE FISH.<br/>AN OPEN OCEAN.</span></div>
+	<div class="home-stats" aria-label="博客內容統計">
+		<span><strong>{posts.length.toString().padStart(2, "0")}</strong> 篇文章</span>
+		<span><strong>{categories.length.toString().padStart(2, "0")}</strong> 個分類</span>
+		<span><strong>{tags.length.toString().padStart(2, "0")}</strong> 個標籤</span>
+		<a href={url("/rss.xml")} data-no-swup><Icon name="fa6-solid:rss" width={14}/> RSS 訂閱</a>
+	</div>
 </section>
-<div class="home-stats" aria-label="博客內容統計">
-	<span><strong>{posts.length.toString().padStart(2, "0")}</strong> 篇文章</span>
-	<span><strong>{categories.length.toString().padStart(2, "0")}</strong> 個分類</span>
-	<span><strong>{tags.length.toString().padStart(2, "0")}</strong> 個標籤</span>
-	<a href={url("/rss.xml")} data-no-swup><Icon name="fa6-solid:rss" width={14}/> RSS 訂閱</a>
-</div>
-<div class="section-heading"><div><p class="eyebrow">THE LATEST</p><h2>最近更新</h2></div><a href={url("/archive/")}>瀏覽歸檔 <span aria-hidden="true">→</span></a></div>
