@@ -50,6 +50,8 @@ A static blog template built with [Astro](https://astro.build).
 
 For a practical Chinese guide to editing site text, images, and posts, see [docs/CONTENT_GUIDE.zh-TW.md](docs/CONTENT_GUIDE.zh-TW.md).
 
+For the complete usage guide, see [docs/USAGE_GUIDE.zh-TW.md](docs/USAGE_GUIDE.zh-TW.md).
+
 ## 📝 Frontmatter of Posts
 
 ```yaml
