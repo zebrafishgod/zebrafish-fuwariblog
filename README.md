@@ -49,6 +49,8 @@ A static blog template built with [Astro](https://astro.build).
 4. Run `pnpm new-post <filename>` to create a new post and edit it in `src/content/posts/`.
 5. Deploy your blog to Vercel, Netlify, GitHub Pages, etc. following [the guides](https://docs.astro.build/en/guides/deploy/). You need to edit the site configuration in `astro.config.mjs` before deployment.
 
+For a practical Chinese guide to editing site text, images, and posts, see [docs/CONTENT_GUIDE.zh-TW.md](docs/CONTENT_GUIDE.zh-TW.md).
+
 ## 📝 Frontmatter of Posts
 
 ```yaml
