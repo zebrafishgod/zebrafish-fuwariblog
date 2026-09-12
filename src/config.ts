@@ -9,7 +9,7 @@ import { LinkPreset } from "./types/config";
 
 export const siteConfig: SiteConfig = {
 	title: "Zebrafish",
-	subtitle: "在程式與生活之間，保持好奇",
+	subtitle: "A fish which is swimming in the sea of coding",
 	description:
 		"Zebrafish 的個人博客，記錄程式開發、技術探索與生活靈感。在知識的海洋裡，持續學習與分享。",
 	url: "https://www.zebrafish.world/",
@@ -60,15 +60,8 @@ export const navBarConfig: NavBarConfig = {
 export const profileConfig: ProfileConfig = {
 	avatar: "assets/images/zebrafish.jpg", // Relative to the /src directory. Relative to the /public directory if it starts with '/'
 	name: "Zebrafish",
-	bio: "在程式的海洋裡，做一條保持好奇的魚。",
+	bio: "A fish which is swimming in the sea of coding.",
 	links: [
-		{
-			name: "RSS 訂閱",
-			icon: "fa6-solid:rss", // Visit https://icones.js.org/ for icon codes
-			// You will need to install the corresponding icon set if it's not already included
-			// `pnpm add @iconify-json/<icon-set-name>`
-			url: "/rss.xml",
-		},
 		{
 			name: "Steam",
 			icon: "fa6-brands:steam",
