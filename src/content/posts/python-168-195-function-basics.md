@@ -1,6 +1,7 @@
 ---
 title: Python 第 168–195 集：函式基礎與參數設計
 published: 2026-09-07
+updated: 2026-09-13
 description: 從函式定義與呼叫開始，掌握返回值、位置與關鍵字參數、預設參數、可變長參數及函式設計原則。
 tags: [Python, 函式, 參數設計, 基礎語法]
 category: Python 學習
@@ -9,6 +10,8 @@ lang: zh_TW
 ---
 
 > 本章整理函式引入、定義與呼叫、參數、返回值、可變長參數和函式設計原則。
+
+> **代碼示例閱讀規則**：每個可執行示例都在程式碼內用 `# 輸出：` 標出預期結果，用 `# 說明：` 解釋參數繫結、返回值或流程。涉及輸入的示例，輸出會以「假設輸入」標注；這些注釋可直接作為除錯時的對照。
 
 ## 1. 學習目標
 
@@ -31,6 +34,8 @@ def greet():
 
 
 greet()
+# 輸出：Hello, Python!
+# 說明：定義函式只建立函式對象，執行 greet() 才會列印內容。
 ```
 
 - `def` 用於定義函式。
@@ -46,6 +51,8 @@ def greet_user(name):
 
 
 greet_user("小明")
+# 輸出：你好，小明！
+# 說明："小明" 是實參，呼叫時繫結到函式的 name 形參。
 ```
 
 ## 3. 返回值與 `return`
@@ -59,6 +66,8 @@ def add(a, b):
 
 result = add(3, 5)
 print(result)
+# 輸出：8
+# 說明：return 把 a + b 的結果交給呼叫者，result 保存這個返回值。
 ```
 
 沒有 `return` 時，函式返回 `None`：
@@ -70,6 +79,8 @@ def show_message():
 
 value = show_message()
 print(value)  # None
+# 輸出：先列印 完成，再列印 None
+# 說明：函式沒有 return，因此 Python 會隱式返回 None。
 ```
 
 `print()` 是顯示資料，`return` 是交還資料。計算類函式通常應返回結果，顯示類函式才直接列印。
@@ -81,6 +92,8 @@ def divide(a, b):
     if b == 0:
         return None
     return a / b
+# 輸出：divide(10, 2) == 5.0；divide(10, 0) == None
+# 說明：b 為 0 時提前 return，避免執行除法造成 ZeroDivisionError。
 ```
 
 多個返回值會被打包成元組：
@@ -91,6 +104,8 @@ def analyze(numbers):
 
 
 minimum, maximum, average = analyze([70, 80, 90])
+# 輸出：minimum == 70、maximum == 90、average == 80.0
+# 說明：多個返回值會被打包成元組，再由左側三個名稱解包。
 ```
 
 ## 4. 形參、實參與參數種類
@@ -101,6 +116,8 @@ def power(base, exponent):  # base、exponent 是形參
 
 
 power(2, 3)                 # 2、3 是實參
+# 輸出：若寫成 print(power(2, 3))，會列印 8
+# 說明：base、exponent 是形參；2、3 是本次呼叫傳入的實參。
 ```
 
 - 形參：定義函式時括號中的名稱。
@@ -114,6 +131,8 @@ def introduce(name, age):
 
 
 introduce("小明", 18)
+# 輸出：小明 今年 18 歲
+# 說明：位置參數依照形參順序繫結。
 ```
 
 按照形參順序傳值，順序錯誤可能造成語意錯誤。
@@ -122,6 +141,8 @@ introduce("小明", 18)
 
 ```python
 introduce(age=18, name="小明")
+# 輸出：小明 今年 18 歲
+# 說明：關鍵字參數按名稱繫結，因此傳入順序可以與定義不同。
 ```
 
 明確寫出參數名稱，可提升可讀性；位置參數必須放在關鍵字參數前面。
@@ -135,6 +156,8 @@ def greet(name, message="歡迎你"):
 
 greet("小明")
 greet("小華", "早安")
+# 輸出：歡迎你，小明！以及 早安，小華！
+# 說明：第一次使用 message 的預設值；第二次明確傳入 "早安"。
 ```
 
 必要參數放前面，預設參數放後面。避免直接用列表或字典作為預設值，因為多次呼叫可能共享同一個可變物件：
@@ -145,6 +168,8 @@ def add_item(item, items=None):
         items = []
     items.append(item)
     return items
+# 輸出：連續呼叫 add_item("A")、add_item("B") 會得到 ['A']、['B']
+# 說明：每次 items 為 None 時都建立新列表，避免不同呼叫共享可變預設物件。
 ```
 
 ## 5. 可變長參數
@@ -160,6 +185,8 @@ def total(*args):
 
 
 print(total(1, 2, 3))
+# 輸出：6
+# 說明：函式內 args == (1, 2, 3)，它是一個元組。
 ```
 
 `**kwargs` 收集多個關鍵字參數，函式內是字典：
@@ -171,6 +198,8 @@ def show_profile(**kwargs):
 
 
 show_profile(name="小明", age=18)
+# 輸出：name: 小明 以及 age: 18（各占一行）
+# 說明：函式內 kwargs == {'name': '小明', 'age': 18}，它是一個字典。
 ```
 
 普通參數、`*args`、`**kwargs` 可以混用：
@@ -180,6 +209,11 @@ def describe(title, *items, **options):
     print(title)
     print(items)
     print(options)
+
+
+describe("購物車", "蘋果", color="green")
+# 輸出：依次列印 購物車、('蘋果',)、{'color': 'green'}
+# 說明：普通參數先接收 title，*items 收集位置參數，**options 收集關鍵字參數。
 ```
 
 呼叫時也能解包：
@@ -194,6 +228,8 @@ print(add(*numbers))
 
 options = {"a": 1, "b": 2, "c": 3}
 print(add(**options))
+# 輸出：兩次 print 都是 6
+# 說明：*numbers 把列表拆成位置參數；**options 把字典鍵值拆成關鍵字參數。
 ```
 
 ## 6. 函式設計原則
@@ -205,6 +241,11 @@ print(add(**options))
 ```python
 def calculate_average(scores):
     return sum(scores) / len(scores)
+
+
+print(calculate_average([70, 80, 90]))
+# 輸出：80.0
+# 說明：函式只負責計算，不負責輸入或列印，因而更容易測試和重用。
 ```
 
 不要讓同一函式同時負責輸入、複雜計算、檔案寫入和大量列印。
@@ -214,6 +255,12 @@ def calculate_average(scores):
 ```python
 def is_passed(score, passing_score=60):
     return score >= passing_score
+
+
+print(is_passed(75))
+print(is_passed(55))
+# 輸出：依次列印 True、False
+# 說明：passing_score 的預設值是 60，也可由呼叫者改成其他標準。
 ```
 
 看到函式名稱和參數，就應能預測它的功能。盡量透過參數傳入資料，減少對全域變數的依賴。
@@ -229,7 +276,12 @@ def is_passed(score, passing_score=60):
 ```python
 def read_scores():
     text = input("請輸入分數：")
-    return [int(item) for item in text.split()]
+    scores = []
+    for item in text.split():
+        scores.append(int(item))
+    return scores
+# 輸出：若輸入 "70 80 90"，read_scores() 返回 [70, 80, 90]
+# 說明：input() 先得到字串，再由 split() 分割、int() 轉成整數。
 
 
 def analyze_scores(scores):
@@ -248,6 +300,8 @@ else:
     print(f"最低分：{minimum}")
     print(f"最高分：{maximum}")
     print(f"平均分：{average:.2f}")
+# 輸出（假設輸入 70 80 90）：最低分：70、最高分：90、平均分：80.00
+# 說明：read_scores 負責輸入和轉換，analyze_scores 負責統計；空輸入時 result 是 None。
 ```
 
 此例把輸入和分析分離，並明確處理空列表。

@@ -1,6 +1,7 @@
 ---
 title: Python 第 69–168 集知識整理
 published: 2026-09-06
+updated: 2026-09-13
 description: 系統整理 Python 的數字與進制、字串、資料結構、字符編碼及檔案讀寫，並提供練習與自查重點。
 tags: [Python, 基礎語法, 資料結構, 檔案處理]
 category: Python 學習
@@ -10,6 +11,8 @@ lang: zh_TW
 
 > 適用範圍：合集「01-Python 基礎篇」第 69 集至第 168 集。  
 > 這一段的主線是：**資料結構 → 文字與編碼 → 檔案 I/O → 函式的入口**。
+
+> **代碼示例閱讀規則**：每個主要示例都在程式碼內標出預期輸出、返回值或資料類型；涉及輸入、檔案和時間的示例，則用注釋說明執行效果，而不是假裝輸出固定不變。示例中的 `# 輸出：` 和 `# 說明：` 注釋可以直接保留在練習程式中。
 
 ## 0. 本階段學習目標
 
@@ -60,6 +63,8 @@ print(oct(number))       # 0o12
 print(hex(number))       # 0xa
 print(int("1010", 2))   # 10
 print(int("a", 16))     # 10
+# 輸出：依次為 0b1010、0o12、0xa、10、10
+# 說明：前 3 個函式把十進制轉成其他進制的字串；int(text, base) 把指定進制的文字轉回十進制整數。
 ```
 
 常用轉換：
@@ -77,6 +82,8 @@ print(int("a", 16))     # 10
 
 ```python
 result = int("1011", 2)
+# 輸出：result == 11
+# 說明："1011" 是以 2 為基數的文字，2 是傳給 int() 的進制參數。
 ```
 
 `"1011"` 和 `2` 是傳入的參數，`int()` 產生轉換後的結果。
@@ -100,6 +107,8 @@ text = "Python"
 
 print(text[0])    # P
 print(text[-1])   # n
+# 輸出：先列印 P，再列印 n
+# 說明：正索引從 0 開始，負索引 -1 表示最後一個字元。
 ```
 
 - 正索引從 `0` 開始。
@@ -118,6 +127,8 @@ print(text[:2])    # Py
 print(text[2:])    # thon
 print(text[::2])   # Pto
 print(text[::-1])  # nohtyP
+# 輸出：yth、Py、thon、Pto、nohtyP（各占一行）
+# 說明：切片的 stop 邊界不包含在結果中；負步長可用來反轉序列。
 ```
 
 ### 3.3 清除與拆分
@@ -128,6 +139,8 @@ raw = "  apple,banana,orange  "
 clean = raw.strip()          # 去除首尾空白
 items = clean.split(",")     # 拆成列表
 result = " / ".join(items)   # 用分隔符重新拼接
+# 輸出：result == "apple / banana / orange"
+# 說明：strip() 產生清理後的新字串，split() 產生列表，join() 再把列表元素組合成字串。
 ```
 
 注意：
@@ -148,6 +161,8 @@ text.startswith("Py")
 text.endswith("ing")
 text.find("Program")         # 找不到時返回 -1
 text.count("m")              # 計數
+# 輸出：這些表達式分別返回 "python programming"、"PYTHON PROGRAMMING"、"Go Programming"、True、True、7、2。
+# 說明：方法不會原地修改 text；若要保存結果，必須寫成 new_text = text.lower() 等形式。
 ```
 
 這些方法都會返回新字串或新結果，不會原地改變字串。
@@ -171,6 +186,8 @@ for word in words:
     counts[word] = counts.get(word, 0) + 1
 
 print(counts)
+# 輸出：{'python': 2, 'is': 2, 'easy': 1, 'and': 1, 'useful': 1}
+# 說明：dict.get(word, 0) 讓第一次遇到單字時從 0 開始計數。
 ```
 
 ### 3.6 自查
@@ -198,6 +215,8 @@ numbers.insert(1, 9)    # 指定位置插入
 numbers[0] = 10         # 修改
 numbers.remove(9)       # 按值刪除第一次出現的元素
 last = numbers.pop()    # 刪除並返回元素
+# 輸出：操作後 numbers == [10, 1, 5]，last == 8
+# 說明：remove() 按值刪除；pop() 預設刪除最後一項並把被刪除的值返回。
 ```
 
 常用操作：
@@ -208,6 +227,8 @@ len(numbers)
 numbers.sort()           # 原地排序
 numbers.reverse()       # 原地反轉
 numbers[1:3]            # 切片，返回新列表
+# 輸出：len(numbers) == 3、5 in numbers == True、numbers.sort() 後為 [1, 5, 10]，reverse() 後為 [10, 5, 1]。
+# 說明：sort() 和 reverse() 會修改原列表；切片則產生新列表。
 ```
 
 `remove(value)` 是按值刪除；`pop(index)` 是按索引刪除並返回元素。找不到 `remove` 的值或索引越界時，要注意例外情況。
@@ -219,6 +240,8 @@ numbers[1:3]            # 切片，返回新列表
 ```python
 point = (10, 20)
 x, y = point
+# 輸出：x == 10，y == 20
+# 說明：這是元組解包；元組本身不能用 point[0] = 99 這種方式修改。
 ```
 
 適合用於：
@@ -231,6 +254,8 @@ x, y = point
 
 ```python
 one = (1,)
+# 輸出：type(one) 是 tuple
+# 說明：單元素元組的逗號不能省略；(1) 只是普通整數表達式。
 ```
 
 ### 4.3 字典（`dict`）
@@ -243,6 +268,8 @@ student = {"name": "小明", "score": 88}
 student["score"] = 92
 student["age"] = 18
 print(student.get("class", "未知"))
+# 輸出：未知
+# 說明：get() 找不到 class 鍵時返回預設字串，不會拋出 KeyError。
 ```
 
 遍歷方式：
@@ -253,6 +280,8 @@ for key in student:
 
 for key, value in student.items():
     print(key, value)
+# 輸出：先列印 name 小明、score 92、age 18（順序以目前字典內容為準）
+# 說明：items() 每次提供一個 (key, value) 鍵值對。
 ```
 
 常用方法：
@@ -279,6 +308,8 @@ b = {3, 4, 5}
 print(a | b)   # 聯集
 print(a & b)   # 交集
 print(a - b)   # 差集
+# 輸出：unique == {1, 2, 3}；a | b == {1, 2, 3, 4, 5}；a & b == {3}；a - b == {1, 2}
+# 說明：集合不保證對外展示順序，重點是成員關係而不是列印順序。
 ```
 
 不要依賴集合保存順序；需要順序時應使用列表。
@@ -293,6 +324,8 @@ stack = []
 stack.append("A")
 stack.append("B")
 print(stack.pop())  # B
+# 輸出：B
+# 說明：B 最後放入，所以先被取出，這就是後進先出（LIFO）。
 ```
 
 ### 4.6 引用、可變性與拷貝
@@ -304,6 +337,8 @@ a = [1, 2]
 b = a
 b.append(3)
 print(a)  # [1, 2, 3]
+# 輸出：a == [1, 2, 3]
+# 說明：b = a 只是建立另一個名稱，a 和 b 指向同一個列表。
 ```
 
 淺拷貝只複製外層容器：
@@ -313,6 +348,8 @@ a = [[1, 2], [3, 4]]
 b = a.copy()
 b.append([5, 6])       # 外層不同
 b[0].append(9)         # 內層仍共享
+# 輸出：b == [[1, 2, 9], [3, 4], [5, 6]]；a == [[1, 2, 9], [3, 4]]
+# 說明：copy() 只複製外層，巢狀列表仍是同一批內層對象。
 ```
 
 深拷貝會遞迴複製巢狀物件：
@@ -321,6 +358,8 @@ b[0].append(9)         # 內層仍共享
 import copy
 
 b = copy.deepcopy(a)
+# 輸出：b 是與 a 內容相同但內外層都獨立的新列表
+# 說明：之後修改 b 的巢狀元素，不會影響 a。
 ```
 
 第一輪學習要記住：
@@ -355,6 +394,8 @@ students = [
     {"name": "小明", "score": 88},
     {"name": "小華", "score": 95},
 ]
+# 輸出：students 是一個包含兩個字典的列表
+# 說明：列表保留學生順序，字典用 name 和 score 表示每位學生的欄位。
 ```
 
 ---
@@ -376,6 +417,8 @@ print(data)
 
 restored = data.decode("utf-8")
 print(restored)
+# 輸出：先列印 b'\xe4\xbd\xa0\xe5\xa5\xbd'，再列印 你好
+# 說明：encode() 把 str 變成 bytes；decode() 使用相同編碼把 bytes 還原成 str。
 ```
 
 編碼和解碼必須使用相容的字符集：
@@ -383,6 +426,8 @@ print(restored)
 ```python
 data = "你好".encode("utf-8")
 data.decode("gbk")   # 可能出錯或產生亂碼
+# 輸出：通常會得到 UnicodeDecodeError，或在某些資料下得到錯誤文字
+# 說明：解碼方式必須和編碼方式匹配；不要用任意編碼掩蓋資料問題。
 ```
 
 ### 5.2 常見字符集
@@ -447,6 +492,8 @@ with open("data.txt", "r", encoding="utf-8") as file:
     content = file.read()
 
 print(content)
+# 輸出：印出 data.txt 的全部文字內容
+# 說明：with 區塊結束後 file 會自動關閉，即使區塊內發生例外也較安全。
 ```
 
 ### 6.2 路徑概念
@@ -459,6 +506,8 @@ print(content)
 ```python
 with open("data/users.txt", "r", encoding="utf-8") as file:
     data = file.read()
+# 輸出：data 是檔案全文的 str；檔案不存在時會拋出 FileNotFoundError
+# 說明：相對路徑相對於目前工作目錄，不一定是 .py 檔案所在目錄。
 ```
 
 相對路徑的基準通常是程式的目前工作目錄，而不是一定等於 `.py` 檔案所在位置；遇到找不到檔案時，先確認工作目錄。
@@ -467,6 +516,8 @@ with open("data/users.txt", "r", encoding="utf-8") as file:
 
 ```python
 open(file, mode="r", encoding=None)
+# 輸出：這是 open() 的呼叫形式，不會自行列印；實際返回一個檔案對象
+# 說明：file 是路徑，mode 決定讀寫方式，encoding 只適用於文字模式。
 ```
 
 - `file`：檔案路徑。
@@ -492,6 +543,8 @@ with open("log.txt", "a", encoding="utf-8") as file:
 
 with open("image.png", "rb") as file:
     binary_data = file.read()
+# 輸出：new record 被追加到 log.txt；binary_data 的類型是 bytes
+# 說明：rb 是二進制讀取，適合圖片等非文字檔案。
 ```
 
 ### 6.5 讀取方法
@@ -499,12 +552,14 @@ with open("image.png", "rb") as file:
 ```python
 with open("data.txt", "r", encoding="utf-8") as file:
     all_text = file.read()       # 全部內容，返回 str
+# 輸出：all_text 是整個檔案內容的 str
 ```
 
 ```python
 with open("data.txt", "r", encoding="utf-8") as file:
     first_line = file.readline() # 一行，返回 str
     rest = file.readlines()      # 剩餘各行組成的列表
+# 輸出：first_line 是一行 str；rest 是後續各行組成的 list[str]
 ```
 
 大檔案建議逐行處理：
@@ -514,6 +569,7 @@ with open("large.txt", "r", encoding="utf-8") as file:
     for line in file:
         process_line = line.strip()
         # 逐行處理，不必一次載入整個檔案
+# 輸出：每次迴圈處理一行；process_line 是去除首尾空白後的 str
 ```
 
 ### 6.6 寫入方法
@@ -522,6 +578,7 @@ with open("large.txt", "r", encoding="utf-8") as file:
 with open("result.txt", "w", encoding="utf-8") as file:
     file.write("第一行\n")
     file.write("第二行\n")
+# 輸出：result.txt 會被覆寫為兩行文字；write() 返回寫入的字元數
 ```
 
 `writelines()` 接受可迭代的字串，但不會自動補換行：
@@ -530,6 +587,8 @@ with open("result.txt", "w", encoding="utf-8") as file:
 lines = ["A\n", "B\n"]
 with open("result.txt", "w", encoding="utf-8") as file:
     file.writelines(lines)
+# 輸出：result.txt 內容為 A 和 B 兩行
+# 說明：writelines() 不會自動加入換行，所以 lines 中要自行放入 \n。
 ```
 
 ### 6.7 換行與轉義
@@ -552,6 +611,8 @@ with open("data.txt", "r", encoding="utf-8") as file:
     print(file.tell())
     file.seek(0)
     print(file.read(5))
+# 輸出：先輸出 0，再輸出讀取後的新位置，seek(0) 後再次輸出檔案前 5 個字元
+# 說明：tell() 查看指針位置；seek(0) 把指針移回檔案開頭。
 ```
 
 - `tell()`：取得目前指針位置。
@@ -568,6 +629,8 @@ with open("note.txt", "r", encoding="utf-8") as file:
 # 二進制模式：得到 bytes
 with open("note.txt", "rb") as file:
     data = file.read()
+# 輸出：text 的類型是 str，data 的類型是 bytes
+# 說明：同一檔案用文本模式會自動解碼，用二進制模式則保留原始位元組。
 ```
 
 - 文本模式適合文字，負責編碼/解碼。
@@ -588,6 +651,8 @@ with open(source_path, "rb") as source, open(target_path, "wb") as target:
         if not chunk:
             break
         target.write(chunk)
+# 輸出：target.bin 與 source.bin 的位元組內容相同
+# 說明：每次只讀取固定大小 chunk，避免大檔案一次佔滿記憶體。
 ```
 
 這種寫法的核心是：每次只在記憶體中保留固定大小的 `chunk`。
@@ -623,6 +688,8 @@ with open("users.txt", "r", encoding="utf-8") as file:
             continue
         username, password = line.split(":", 1)
         users[username] = password
+# 輸出：users 會變成 {'alice': '123456', 'bob': 'abc123'}（實際內容依檔案而定）
+# 說明：split(":", 1) 只按第一個冒號切分，避免密碼中再有冒號時過度拆分。
 ```
 
 重要提醒：這只是練習檔案處理的簡化方案。真實系統不能明文保存密碼，後續應學習雜湊、加鹽和資料庫。
@@ -709,6 +776,8 @@ with open("users.txt", "r", encoding="utf-8") as file:
 
 ```python
 value = data.get("missing", "default")
+# 輸出：value == "default"
+# 說明：get() 可在查找不存在的鍵時提供安全的預設值。
 ```
 
 ### 8.4 `ValueError`

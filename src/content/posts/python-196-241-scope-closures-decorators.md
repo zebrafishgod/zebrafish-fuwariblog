@@ -1,6 +1,7 @@
 ---
 title: Python 第 196–241 集：名稱空間、作用域、閉包與裝飾器
 published: 2026-09-08
+updated: 2026-09-13
 description: 深入理解 Python 名稱空間、LEGB 作用域、global、nonlocal、閉包、裝飾器與多層裝飾器的執行方式。
 tags: [Python, 作用域, 閉包, 裝飾器]
 category: Python 學習
@@ -9,6 +10,8 @@ lang: zh_TW
 ---
 
 > 本章整理名稱空間、名稱查找、作用域、`global`、`nonlocal`、函式傳遞、閉包、裝飾器、有參裝飾器與裝飾器疊加。
+
+> **代碼示例閱讀規則**：每個可執行示例都在程式碼內用 `# 輸出：` 標出預期結果，用 `# 說明：` 解釋名稱查找、閉包狀態或裝飾器包裝流程。輸出順序是理解本章的重點，請先預測再執行。
 
 ## 1. 本階段學習目標
 
@@ -40,6 +43,8 @@ lang: zh_TW
 ```python
 x = 10
 print(x)
+# 輸出：10
+# 說明：名稱 x 在目前可見的名稱空間中繫結到整數對象 10。
 ```
 
 這裡 `x` 是名稱，`10` 是對象；名稱空間保存了兩者的關係。
@@ -77,6 +82,8 @@ def outer():
 
 
 outer()  # local
+# 輸出：local
+# 說明：inner 的局部 name 優先於 outer 的 enclosing name 和模組全域 name。
 ```
 
 如果目前作用域找不到，就向外層查找；全部找不到時產生 `NameError`。
@@ -96,6 +103,8 @@ def show():
 
 show()       # local
 print(value) # global
+# 輸出：先列印 local，再列印 global
+# 說明：show() 內的 value 只遮蔽外層名稱，並沒有修改全域 value。
 ```
 
 避免把自己的變數命名為 `list`、`str`、`sum` 等內置名稱，以免遮蔽內置功能。
@@ -113,6 +122,12 @@ count = 0
 def increase():
     count = 1       # 新的局部名稱
     print(count)
+
+
+increase()
+print(count)
+# 輸出：依次列印 1、0
+# 說明：沒有 global 時，函式內的賦值建立局部 count。
 ```
 
 若要在函式內重新綁定全域名稱，需要 `global`：
@@ -124,6 +139,13 @@ count = 0
 def increase():
     global count
     count += 1
+
+
+increase()
+increase()
+print(count)
+# 輸出：2
+# 說明：global 允許函式重新繫結模組全域名稱，但會增加隱藏狀態，應審慎使用。
 ```
 
 過度使用 `global` 會讓資料流不清楚。優先考慮用參數傳入、用返回值傳出。
@@ -147,6 +169,8 @@ def make_counter():
 counter = make_counter()
 print(counter())  # 1
 print(counter())  # 2
+# 輸出：依次列印 1、2
+# 說明：nonlocal 讓內層 counter 修改 outer 中保存的 count，而不是建立新的局部 count。
 ```
 
 ## 5. 函式是一等對象
@@ -170,6 +194,8 @@ def multiply(a, b):
 operations = [add, multiply]
 for operation in operations:
     print(operation(2, 3))
+# 輸出：5、6（各占一行）
+# 說明：列表保存兩個函式對象，迴圈中透過相同呼叫形式執行不同運算。
 ```
 
 把函式傳給另一個函式：
@@ -180,6 +206,8 @@ def apply_operation(func, a, b):
 
 
 print(apply_operation(add, 2, 3))
+# 輸出：5
+# 說明：add 作為實參傳給 func，apply_operation 不需要知道具體運算內容。
 ```
 
 這是理解閉包和裝飾器的前提。
@@ -202,6 +230,8 @@ def make_multiplier(factor):
 
 times_two = make_multiplier(2)
 print(times_two(5))  # 10
+# 輸出：10
+# 說明：make_multiplier 執行完後，返回的 multiply 仍記得外層 factor == 2。
 ```
 
 雖然 `make_multiplier()` 已經執行完畢，`multiply()` 仍記得 `factor`。這個被保留的外層環境就是閉包的重要特徵。
@@ -227,6 +257,13 @@ def make_counter(start=0):
         return count
 
     return count_up
+
+
+counter = make_counter(10)
+print(counter())
+print(counter())
+# 輸出：依次列印 11、12
+# 說明：nonlocal 讓閉包保存的 count 在多次呼叫之間持續更新。
 ```
 
 ## 7. 裝飾器
@@ -261,6 +298,8 @@ def say_hello():
 
 
 say_hello()
+# 輸出：函式開始、Hello、函式結束（各占一行）
+# 說明：@log_call 會把 say_hello 替換成 wrapper，wrapper 再呼叫原函式。
 ```
 
 `@log_call` 是語法糖，等價於：
@@ -271,6 +310,7 @@ def say_hello():
 
 
 say_hello = log_call(say_hello)
+# 輸出：這是裝飾器語法糖的等價寫法；執行後 say_hello 指向包裝函式。
 ```
 
 ### 7.2 支援原函式參數
@@ -286,6 +326,8 @@ def log_call(func):
         return result
 
     return wrapper
+# 輸出：使用 @log_call 裝飾帶參數函式時，參數會由 wrapper 的 *args/**kwargs 原樣轉交。
+# 說明：wrapper 必須保留 return result，否則原函式返回值會丟失。
 ```
 
 這樣無論原函式有多少位置參數或關鍵字參數，裝飾器都能轉交它們。
@@ -299,6 +341,8 @@ def bad_decorator(func):
     def wrapper(*args, **kwargs):
         func(*args, **kwargs)  # 沒有返回
     return wrapper
+# 輸出：被 bad_decorator 裝飾的函式返回 None
+# 說明：wrapper 呼叫了原函式但沒有 return，因此結果沒有傳回呼叫者。
 ```
 
 正確寫法：
@@ -309,6 +353,8 @@ def good_decorator(func):
         result = func(*args, **kwargs)
         return result
     return wrapper
+# 輸出：被 good_decorator 裝飾的函式仍可得到原函式返回值
+# 說明：result 被明確返回，包裝只增加行為，不破壞原介面。
 ```
 
 ### 7.4 保留原函式資訊
@@ -326,6 +372,18 @@ def log_call(func):
         return func(*args, **kwargs)
 
     return wrapper
+
+
+@log_call
+def greet():
+    """顯示問候。"""
+    print("Hello")
+
+
+print(greet.__name__)
+print(greet.__doc__)
+# 輸出：依次列印 greet、顯示問候。
+# 說明：@wraps(func) 將原函式的中繼資料複製到 wrapper。
 ```
 
 ## 8. 有參裝飾器
@@ -333,6 +391,9 @@ def log_call(func):
 普通裝飾器接收原函式；有參裝飾器要再多一層函式，先接收配置，再接收原函式。
 
 ```python
+from functools import wraps
+
+
 def repeat(times):
     def decorator(func):
         @wraps(func)
@@ -350,6 +411,11 @@ def repeat(times):
 @repeat(3)
 def say_hi():
     print("Hi")
+
+
+say_hi()
+# 輸出：連續列印三次 Hi
+# 說明：repeat(3) 先建立裝飾器，再把 say_hi 包裝成執行三次的 wrapper。
 ```
 
 等價流程：
@@ -376,12 +442,16 @@ repeat(3) → 得到 decorator
 @decorator_b
 def work():
     pass
+# 輸出：定義 work 本身不列印任何內容
+# 說明：只有在 decorator_a 和 decorator_b 的實作會列印或修改行為時，呼叫 work() 才會看到裝飾器效果。
 ```
 
 等價於：
 
 ```python
 work = decorator_a(decorator_b(work))
+# 輸出：這是疊加裝飾器的等價包裝形式
+# 說明：最靠近 def 的 decorator_b 先包原函式，外層 decorator_a 再包住結果。
 ```
 
 呼叫時，外層 `decorator_a` 先進入；若它呼叫內層函式，才會進入 `decorator_b`。因此常見輸出順序是：
@@ -426,6 +496,8 @@ def calculate_total(numbers):
 
 
 print(calculate_total(range(100000)))
+# 輸出：先列印類似 calculate_total 耗時 0.00xxxx 秒，再列印 4999950000
+# 說明：耗時會因電腦而不同；總和固定，計時器不應改變原函式返回值。
 ```
 
 這個例子將「計時」從業務邏輯中分離出來，原函式只負責計算總和。
