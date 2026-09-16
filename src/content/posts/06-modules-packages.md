@@ -1,7 +1,7 @@
 ---
 title: Python 第 277-308 集：模块与包
 published: 2026-09-16
-updated: 2026-09-18
+updated: 2026-09-16
 description: 模块与包
 tags: [Python, 基础篇]
 category: Python 学习
