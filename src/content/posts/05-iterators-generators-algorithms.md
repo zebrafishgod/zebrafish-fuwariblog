@@ -1,7 +1,7 @@
 ---
 title: Python 第 242-276 集：迭代器、生成器及常用算法
-published: 2026-09-16
-updated: 2026-09-18
+published: 2026-09-15
+updated: 2026-09-16
 description: 迭代器 生成器 常用算法
 tags: [Python, 基础篇]
 category: Python 学习
