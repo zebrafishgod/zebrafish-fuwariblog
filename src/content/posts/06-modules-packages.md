@@ -24,8 +24,6 @@ lang: zh_CN
 
 前置知识：函数、作用域、列表与字典、文件和文件夹。类型提示在 [第 5 章](05-iterators-generators-algorithms.md) 已介绍；看到 `price: int` 时，记得它是提示，不是自动验证。
 
-这章附有实际可执行的 [module_demo 小项目](examples/module_demo/README.md)。你可以先执行一次，再按下文逐步拆解。所有例子都在本机运行，不需外部服务。
-
 ## 2. 先创建直觉
 
 ### 2.1 模块像一个有自己名字表的工具抽屉
