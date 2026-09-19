@@ -1,7 +1,7 @@
 ---
 title: Python 第 340～363 集，哈希值、正则表达式，以及 logging 的设定、logger、handler、命名与日志分类
-published: 2026-09-17
-updated: 2026-09-19
+published: 2026-09-18
+updated: 2026-09-20
 description: 哈希值、正则表达式，以及 logging 的设定、logger、handler、命名与日志分类
 tags: [Python, 基础篇]
 category: Python 学习
