@@ -11,7 +11,7 @@ lang: zh_CN
 
 # 第二章　把数据整理好，再保存到文件（第 69–167 集）
 
-这一章解决两个问题：「多笔数据要放在哪里？程序关闭后，如何把数据留下来？」学完后，你应能完成文字清洗、商品数据的增删改查，以及 UTF-8 文件读写。
+这一章解决两个问题：「多笔数据要放在哪里？程序关闭后，如何把数据留下来？」学完后，应能完成文字清洗、商品数据的增删改查，以及 UTF-8 文件读写。
 
 前置知识：变量、基本数据型别、`print()`、`input()`、`if`、`for`、`while`。本章使用 Python 3；第 168 集的函数引入放在下一章。
 
@@ -375,12 +375,12 @@ str ←── decode("utf-8") ── bytes
 ```
 
 ```python
-text = "你好"
+text = "好"
 data = text.encode("utf-8")
 print(data)
 print(len(text), len(data))
 print(data.decode("utf-8"))
-# 输出：b'\xe4\xbd\xa0\xe5\xa5\xbd'；2 6；你好。
+# 输出：b'\xe4\xbd\xa0\xe5\xa5\xbd'；2 6；好。
 # 说明：本例每个中文字占三个 UTF-8 字节；len(str) 和 len(bytes) 的单位不同。
 ```
 
@@ -389,7 +389,7 @@ print(data.decode("utf-8"))
 ASCII 主要涵盖英文和数字；Unicode 定义字符及码位；UTF-8、UTF-16 是把 Unicode 文字编成字节的方式；GBK 是常见的传统中文编码。Unicode 和 UTF-8 不在同一层。
 
 ```python
-data = "你好".encode("utf-8")
+data = "好".encode("utf-8")
 try:
     print(data.decode("ascii"))
 except UnicodeDecodeError:
@@ -414,7 +414,7 @@ print("源代码中的中文")
 # 说明：编码宣告示范放在前两行；shebang 在支援它的启动环境用来选择直译器，对 Python 语法而言是注解。
 ```
 
-shebang 常见于 Unix 类系统可直接执行的脚本；Windows 的 Python launcher 也可能解读它，但不应假定任何编辑器或启动方式都据此选版本。执行 `python 文件名.py` 时，先由你选的 `python` 决定执行环境。Python 3 仍可能因外部数据编码或终端显示设定不符而乱码，不能把「Python 3」当作永不乱码的保证。
+shebang 常见于 Unix 类系统可直接执行的脚本；Windows 的 Python launcher 也可能解读它，但不应假定任何编辑器或启动方式都据此选版本。执行 `python 文件名.py` 时，先由选的 `python` 决定执行环境。Python 3 仍可能因外部数据编码或终端显示设定不符而乱码，不能把「Python 3」当作永不乱码的保证。
 
 **练习：**两个中文字为什么可能占六个字节？**自查简答：**文字长度和 UTF-8 字节长度的单位不同；编码是 `str → bytes`，解码反向。
 
@@ -429,13 +429,13 @@ from tempfile import TemporaryDirectory
 with TemporaryDirectory() as folder:
     path = Path(folder) / "note.txt"
     with open(path, "w", encoding="utf-8") as file:
-        count = file.write("你好\nPython")
+        count = file.write("好\nPython")
     with open(path, "r", encoding="utf-8") as file:
         content = file.read()
     print(count)
     print(content)
     print(file.closed)
-# 输出：9；你好；Python；True（四行）。
+# 输出：9；好；Python；True（四行）。
 # 说明：write 返回字符数；read 返回文字；内层 with 关闭文件，外层结束后移除暂存数据。
 ```
 
@@ -576,7 +576,7 @@ from tempfile import TemporaryDirectory
 
 with TemporaryDirectory() as folder:
     path = Path(folder) / "position.txt"
-    path.write_text("你好ABC", encoding="utf-8")
+    path.write_text("好ABC", encoding="utf-8")
     with open(path, "r", encoding="utf-8") as file:
         print(file.read(1))
         position = file.tell()
@@ -585,7 +585,7 @@ with TemporaryDirectory() as folder:
         print(file.read(1))
         file.seek(0)
         print(file.read(2))
-# 输出：你；好；好；你好。
+# 输出：；好；好；好。
 # 说明：tell 的值可供 seek 恢复位置；文字模式不要把它当成第几个字符。
 ```
 
@@ -650,7 +650,7 @@ from tempfile import TemporaryDirectory
 
 with TemporaryDirectory() as folder:
     path = Path(folder) / "note.txt"
-    path.write_bytes("你好".encode("utf-8"))
+    path.write_bytes("好".encode("utf-8"))
     with open(path, "r", encoding="utf-8") as file:
         text = file.read()
     with open(path, "rb") as file:

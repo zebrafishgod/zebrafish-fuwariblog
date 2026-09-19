@@ -1,7 +1,7 @@
 ---
 title: Python 第 277-308 集：模块与包
 published: 2026-09-16
-updated: 2026-09-16
+updated: 2026-09-18
 description: 模块与包
 tags: [Python, 基础篇]
 category: Python 学习
@@ -15,7 +15,7 @@ lang: zh_CN
 
 ## 1. 本章解决什么问题？需要哪些前置知识？
 
-如果所有商品数据、价格计算、用户输入都放在同一个文件，程序会逐渐难找、难修改。本章教你把工作拆成多个文件，并回答：
+如果所有商品数据、价格计算、用户输入都放在同一个文件，程序会逐渐难找、难修改。本章教把工作拆成多个文件，并回答：
 
 1. `import` 到底做了什么？它不是单纯把另一个文件文字贴进来。
 2. `import module` 和 `from module import name` 有什么差别？
@@ -24,15 +24,17 @@ lang: zh_CN
 
 前置知识：函数、作用域、列表与字典、文件和文件夹。类型提示在 [第 5 章](05-iterators-generators-algorithms.md) 已介绍；看到 `price: int` 时，记得它是提示，不是自动验证。
 
+这章附有实际可执行的 [module_demo 小项目](examples/module_demo/README.md)。可以先执行一次，再按下文逐步拆解。所有例子都在本机运行，不需外部服务。
+
 ## 2. 先创建直觉
 
 ### 2.1 模块像一个有自己名字表的工具抽屉
 
 对本章的自订程序来说，一个 `.py` 文件通常就是一个模块，例如 `pricing.py`。模块也可能来自 Python 内建功能或其他载入方式，所以不要把所有模块都限定成普通文字文件。
 
-模块有自己的**名称空间（namespace）**：它的变量、常数、函数名字都存放在自己的环境里。假设你写 `import pricing`，当前程序取得一个名为 `pricing` 的模块参考；透过 `pricing.line_total(...)` 便可使用它的函数。
+模块有自己的**名称空间（namespace）**：它的变量、常数、函数名字都存放在自己的环境里。假设写 `import pricing`，当前程序取得一个名为 `pricing` 的模块参考；透过 `pricing.line_total(...)` 便可使用它的函数。
 
-你可以把 `pricing.line_total` 理解为：「到 pricing 这个抽屉，找 line_total 这件工具」。不同模块可有同名函数，不一定互相冲突。
+可以把 `pricing.line_total` 理解为：「到 pricing 这个抽屉，找 line_total 这件工具」。不同模块可有同名函数，不一定互相冲突。
 
 ### 2.2 包／包是用来组织模块的层级
 
@@ -53,7 +55,7 @@ Python 也支援不含 `__init__.py` 的 namespace package；「文件夹没有 
 
 同一个 Python 行程内，再用相同完整名称导入，通常会从 `sys.modules` 快取取得已有模块。模块已完成的顶层程序代码一般不会再执行一次。
 
-因此，把 `input()`、启动选单、读写正式数据等动作随意放在模块顶层，会让别人一导入你的工具，就被迫启动整个程序。
+因此，把 `input()`、启动选单、读写正式数据等动作随意放在模块顶层，会让别人一导入的工具，就被迫启动整个程序。
 
 ## 3. 最小可跑例：先学导入，再看多文件项目
 
@@ -108,7 +110,7 @@ Set-Location 'D:\GPT projec1\outputs\python-foundations\examples'
 python -m module_demo
 ```
 
-如果你把笔记搬到其他地方，第一行改成自己 `examples` 文件夹的路径。第二行的 `module_demo` 是包名称，没有 `.py`，也没有斜线。
+如果把笔记搬到其他地方，第一行改成自己 `examples` 文件夹的路径。第二行的 `module_demo` 是包名称，没有 `.py`，也没有斜线。
 
 预期输出：
 
@@ -174,7 +176,7 @@ APP_NAME = "教学商品查询"
 __all__ = ["APP_NAME"]
 ```
 
-`__init__.py` 可以是空的。本例多放一个包层级常数，让你知道 `import module_demo` 后可使用 `module_demo.APP_NAME`。
+`__init__.py` 可以是空的。本例多放一个包层级常数，让知道 `import module_demo` 后可使用 `module_demo.APP_NAME`。
 
 `__all__` 主要用来说明 `from module_demo import *` 要带出的名字；它不是存取权限或安全限制，也不表示所有子模块都自动载入。即使没有把 `catalog` 写进这个清单，仍可明确导入 `module_demo.catalog`。
 
@@ -207,7 +209,7 @@ if __name__ == "__main__":
 
 入口函数决定先查哪个商品、购买多少、最后显示什么。`P001` 是本例确定存在的固定数据；若改成用户输入，就必须先处理找不到商品的 `None`，不能直接取 `product["price_cents"]`。
 
-现在你已经把工作分开了：数据模块不知道画面怎么显示，计算模块不知道用户如何输入，而入口负责安排流程。
+现在已经把工作分开了：数据模块不知道画面怎么显示，计算模块不知道用户如何输入，而入口负责安排流程。
 
 ### 3.7 `__name__`：现在是入口，还是被别人导入？
 
@@ -215,11 +217,11 @@ if __name__ == "__main__":
 
 ```python
 # 输出：
-# 你好，小明
+# 好，小明
 # 当前模块名：__main__
 # 说明：这是用 python -m module_demo.entry_demo 执行时的输出；导入时不显示。
 def greet(name):
-    return f"你好，{name}"
+    return f"好，{name}"
 
 
 def main():
@@ -238,7 +240,7 @@ if __name__ == "__main__":
 ```python
 # 输出：
 # module_demo.entry_demo
-# 你好，小华
+# 好，小华
 # 说明：先前的 main() 不会因导入而被调用；greet() 仍然可以使用。
 from module_demo import entry_demo
 
@@ -398,7 +400,7 @@ print(source_file.parent.name == "module_demo")
 
 `pathlib` 是标准库；本例只把路径转成对象，读取 `.name`（文件名）与 `.parent.name`（上一层文件夹名），不创建或修改文件。
 
-`sys.path` 是可修改列表，`sys.path.insert(0, 某个文件夹的字符串路径)` 能让当前行程优先查找该位置。若要找到 `module_demo`，应加入**包含 module_demo 的上一层文件夹**，而非只加入包内某个子模块所在位置。它不会替你安装包，也不会永久改变其他行程。
+`sys.path` 是可修改列表，`sys.path.insert(0, 某个文件夹的字符串路径)` 能让当前行程优先查找该位置。若要找到 `module_demo`，应加入**包含 module_demo 的上一层文件夹**，而非只加入包内某个子模块所在位置。它不会替安装包，也不会永久改变其他行程。
 
 对这份小项目，从正确的 `examples` 目录以 `-m` 启动即可。不要把自己电脑的绝对路径散落到每个文件；搬到另一台电脑就可能失效，加入过度优先的路径也可能导入错误的同名模块。
 
@@ -453,7 +455,7 @@ shop_project/
    └─ settings.py         共用设定
 ```
 
-在 `shop_project` 目录执行 `python -m shop`。随著程序成长再创建需要的部分，不要求一开始就有所有文件。你应该能回答「这个文件解决哪一类问题」，而不只是照抄目录名称。
+在 `shop_project` 目录执行 `python -m shop`。随著程序成长再创建需要的部分，不要求一开始就有所有文件。应该能回答「这个文件解决哪一类问题」，而不只是照抄目录名称。
 
 几个分工判断：
 

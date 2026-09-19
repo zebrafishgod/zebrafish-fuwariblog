@@ -16,9 +16,9 @@ lang: zh_CN
 
 ## 1. 电脑与 Python：各自负责什么
 
-可以把一次执行理解成以下流程：你在编辑器写文字 → 存成 `.py` → Python 解释器读取程序 → 操作系统协调硬件完成工作。
+可以把一次执行理解成以下流程：在编辑器写文字 → 存成 `.py` → Python 解释器读取程序 → 操作系统协调硬件完成工作。
 
-| 名词 | 白话解释 | 你需要做到的事 |
+| 名词 | 白话解释 | 需要做到的事 |
 |---|---|---|
 | CPU | 执行计算与指令 | 知道程序的计算要消耗时间 |
 | 内存 RAM | 保存正在使用的数据 | 知道程序结束后，普通变量不会自动存文件 |
@@ -37,8 +37,8 @@ Python 常被称为解释型语言；以常用的 CPython 而言，源代码通�
 创建 `hello.py`，内容如下：
 
 ```python
-print("你好，Python！")
-# 输出：你好，Python！
+print("好，Python！")
+# 输出：好，Python！
 # 说明：print 把文字显示在画面；引号属于语法，画面上不会连同引号一起显示。
 ```
 
@@ -130,7 +130,7 @@ print(c)
 ## 4. `input()` 收到的一律是字符串
 
 ```python
-raw_quantity = "3"  # 先模拟 input() 返回，方便你直接执行。
+raw_quantity = "3"  # 先模拟 input() 返回，方便直接执行。
 print(raw_quantity * 2)
 quantity = int(raw_quantity)
 print(quantity * 2)
@@ -141,9 +141,9 @@ print(quantity * 2)
 真正互动时：
 
 ```python
-name = input("你的名字：")
-print(f"你好，{name}！")
-# 输出：先显示「你的名字：」；假设输入 小林，之后显示「你好，小林！」。
+name = input("的名字：")
+print(f"好，{name}！")
+# 输出：先显示「的名字：」；假设输入 小林，之后显示「好，小林！」。
 # 说明：input 会等待用户输入；f-string 把大括号中的表达式结果放入文字。
 ```
 

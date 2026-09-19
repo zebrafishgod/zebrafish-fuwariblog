@@ -23,13 +23,13 @@ lang: zh_CN
 
 ```python
 def greet():
-    print("你好，Python！")
+    print("好，Python！")
 
 
 print("先准备")
 greet()
 print("已完成")
-# 输出：先准备；你好，Python！；已完成。
+# 输出：先准备；好，Python！；已完成。
 # 说明：def 创建函数对象并系结名称；执行 greet() 才进入函数本体。
 ```
 
@@ -46,12 +46,12 @@ print("已完成")
 
 ```python
 def greet_user(name):
-    print(f"你好，{name}！")
+    print(f"好，{name}！")
 
 
 greet_user("小明")
 greet_user("小华")
-# 输出：你好，小明！；你好，小华！
+# 输出：好，小明！；好，小华！
 # 说明：每次调用会将该次传入的文字系结到 name，函数本体只需写一次。
 ```
 
@@ -169,14 +169,14 @@ except TypeError:
 ### 3.2 预设值是「没提供时用什么」
 
 ```python
-def greet(name, message="欢迎你"):
+def greet(name, message="欢迎"):
     return f"{message}，{name}！"
 
 
 print(greet("小明"))
 print(greet("小华", "早安"))
 print(greet("小明", message=""))
-# 输出：欢迎你，小明！；早安，小华！；，小明！
+# 输出：欢迎，小明！；早安，小华！；，小明！
 # 说明：只有没传 message 时才使用预设值；明确传空字符串仍是有效的传入值。
 ```
 
@@ -214,7 +214,7 @@ print(add_item("B"))
 # 说明：这是刻意展示的错误设计；预设列表在定义时创建一次，多次省略 items 会共享它。
 ```
 
-不是所有预设参数都有问题；问题在于你修改了跨调用共享的可变预设对象。希望每次预设使用新列表，可用 `None` 表示尚未提供。
+不是所有预设参数都有问题；问题在于修改了跨调用共享的可变预设对象。希望每次预设使用新列表，可用 `None` 表示尚未提供。
 
 ```python
 def add_item(item, items=None):

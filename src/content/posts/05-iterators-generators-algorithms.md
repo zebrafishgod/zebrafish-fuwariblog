@@ -1,7 +1,7 @@
 ---
 title: Python 第 242-276 集：迭代器、生成器及常用算法
-published: 2026-09-15
-updated: 2026-09-16
+published: 2026-09-16
+updated: 2026-09-18
 description: 迭代器 生成器 常用算法
 tags: [Python, 基础篇]
 category: Python 学习
@@ -110,7 +110,7 @@ for name in names:
     print(name)
 ```
 
-下面用明确步骤模拟核心行为，目的是理解，不是要求你以后把 `for` 改写得更长：
+下面用明确步骤模拟核心行为，目的是理解，不是要求以后把 `for` 改写得更长：
 
 ```python
 # 输出：
@@ -356,7 +356,6 @@ print(factorial(0))
 
 `["A", "B", "C"]` 的全排列是「三个元素各用一次，所有可能的先后顺序」。
 
-示例1(切片递归)
 ```python
 # 输出：
 # ABC
@@ -365,7 +364,6 @@ print(factorial(0))
 # BCA
 # CAB
 # CBA
-# 
 # 说明：permutations() 交回排列列表；外层 for 和 print() 显示各排列。
 # 前提：输入元素互不重复；本例适合少量数据。
 def permutations(items):
@@ -390,64 +388,6 @@ for arrangement in permutations(["A", "B", "C"]):
 基例为什么是 `[[]]` 而不是 `[]`？因为「没有剩余元素」仍有**一种**排列方式：空排列。外层才能把最后选中的元素接上去。若直接交回 `[]`，上层 `for rest in ...` 一次也不执行，全部结果就消失了。
 
 互不重复的 `n` 个元素有 `n!` 个排列。`10!` 就有 3,628,800 个结果。这份写法还会保存中间结果，所以只拿小型数据学习。若输入有重复值，可能产生内容重复的排列；去重是另一个问题。生成器可以减少一次保存的结果，却不能消除排列数量爆增的事实。
-
-示例2(回溯递归)
-```python
- def permutations(items):
-      if len(items) == 0:
-          return [[]]
-
-      result = []
-      for index in range(len(items)):
-          first = items[index]
-          remaining = items[:index] + items[index + 1:]
-          for rest in permutations(remaining):
-              result.append([first] + rest)
-      return result
-
-  Algorithm 2 (corrected): Recursive with backtracking
-  S = input()
-  l = list(S)
-
-  def permutation(l, level):
-      if level == len(l):
-          print(''.join(l))
-      for i in range(level, len(l)):
-          l[level], l[i] = l[i], l[level]
-          permutation(l, level + 1)
-          l[level], l[i] = l[i], l[level]  # backtrack
-
-  permutation(l, 0)
-  ```
-主要区别
-
-1. 方法
-
-- 算法1：在每次递归层创建新列表（不可变方法）
-- 算法2：通过交换原地修改单个列表（可变方法）
-
-2. 空间复杂度
-
-- 算法1：O(n² × n!) - 内存中存储所有排列和中间切片
-- 算法2：O(n) - 只有递归栈，立即打印，不存储
-
-3. 时间复杂度
-
-两者都是 O(n × n!)，但算法1有列表切片操作的额外开销。
-
-4. 输出格式
-
-- 算法1：返回所有排列的列表
-- 算法2：直接打印每个排列（不累积结果）
-
-5. 内存效率
-
-对于大输入，算法2内存效率明显更高，因为它不构建整个结果集。
-
-6. 使用场景
-
-- 当你需要存储所有排列以便进一步处理时，使用算法1
-- 当你只需要迭代排列一次（流式处理方式）时，使用算法2
 
 ### 3.9 二分搜索：先确认数据已排序
 
@@ -510,7 +450,7 @@ print(add_named(3, 4))
 print(add_short(3, 4))
 ```
 
-「高阶函数」在这里指会接收其他函数作为参数的函数。你可以把小型规则交给它，让它负责完整操作。
+「高阶函数」在这里指会接收其他函数作为参数的函数。可以把小型规则交给它，让它负责完整操作。
 
 ### 3.11 用 `key` 说清楚排序依据
 
@@ -527,7 +467,7 @@ print(max(products, key=lambda product: product[1]))
 print(products)
 ```
 
-`lambda product: product[1]` 表示「对每个商品，拿第二项价格作为比较依据」。`key` 接收的是**函数本身**，不是你先算好的一个价格。
+`lambda product: product[1]` 表示「对每个商品，拿第二项价格作为比较依据」。`key` 接收的是**函数本身**，不是先算好的一个价格。
 
 想由高到低排序，加上 `reverse=True`。价格相同时，Python 的排序会保留原本的相对顺序，称为稳定排序。商品很多时，清楚的 `def price_of(product): ...` 和 `lambda` 都可以使用，功能不因名字不同而改变。
 
