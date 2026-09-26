@@ -1,0 +1,95 @@
+---
+import { Icon } from "astro-icon/components";
+import { navBarConfig, siteConfig } from "../config";
+import { LinkPresets } from "../constants/link-presets";
+import type { NavBarLink } from "../types/config";
+import { url } from "../utils/url-utils";
+import LightDarkSwitch from "./LightDarkSwitch.svelte";
+import Search from "./Search.svelte";
+import DisplaySettings from "./widget/DisplaySettings.svelte";
+
+const links: NavBarLink[] = navBarConfig.links.map((item) =>
+	typeof item === "number" ? LinkPresets[item] : item,
+);
+---
+<div id="navbar" class="z-50 onload-animation">
+  <div class="card-base !overflow-visible max-w-[var(--page-width)] h-[4.5rem] !rounded-t-none mx-auto flex items-center justify-between px-3 md:px-4 gap-2 navbar-shell">
+    <a href={url("/")} class="brand-link" aria-label="Zebrafish 首页"><span class="brand-mark"><img src={url("/favicon/zebrafish.svg")} width="30" height="30" alt=""/></span><span class="brand-copy"><strong>{siteConfig.title}</strong><small>digital garden</small></span></a>
+    <nav class="primary-nav desktop-nav" aria-label="主要导航">
+      {links.map(link => <a class="nav-link" href={link.external ? link.url : url(link.url)} target={link.external ? "_blank" : undefined} rel={link.external ? "noopener noreferrer" : undefined}>{link.name}{link.external && <span aria-hidden="true"> ↗</span>}</a>)}
+    </nav>
+    <div class="flex items-center nav-actions">
+      <Search client:load/>
+      {!siteConfig.themeColor.fixed && <button aria-label="调整主题色彩" aria-expanded="false" aria-controls="display-setting" class="btn-plain rounded-lg h-11 w-11" id="display-settings-switch"><Icon name="material-symbols:palette-outline" class="text-xl"/></button>}
+      <LightDarkSwitch client:load label="切换色彩模式"/>
+      <button aria-label="开启导航菜单" aria-expanded="false" aria-controls="nav-menu-panel" class="btn-plain rounded-lg w-11 h-11 lg:!hidden" id="nav-menu-switch"><Icon name="material-symbols:menu-rounded" class="text-xl"/></button>
+    </div>
+    <nav id="nav-menu-panel" aria-label="行動版导航" class="primary-nav mobile-nav float-panel float-panel-closed" inert>
+      <div class="mobile-nav-head"><span>EXPLORE</span><small>{siteConfig.title}</small></div>
+      {links.map(link => <a class="nav-link" href={link.external ? link.url : url(link.url)} target={link.external ? "_blank" : undefined} rel={link.external ? "noopener noreferrer" : undefined}>{link.name}<span aria-hidden="true">{link.external ? "↗" : "→"}</span></a>)}
+    </nav>
+    <DisplaySettings client:only="svelte"/>
+  </div>
+</div>
+<script>
+function setPanel(id: string, buttonId: string, open: boolean) {
+  const panel = document.getElementById(id);
+  panel?.classList.toggle("float-panel-closed", !open);
+  if (panel) panel.inert = !open;
+  document.getElementById(buttonId)?.setAttribute("aria-expanded", String(open));
+}
+function closePanels() {
+  setPanel("nav-menu-panel", "nav-menu-switch", false);
+  setPanel("display-setting", "display-settings-switch", false);
+}
+for (const [buttonId, panelId] of [["nav-menu-switch", "nav-menu-panel"], ["display-settings-switch", "display-setting"]]) {
+  document.getElementById(buttonId)?.addEventListener("click", () => {
+    const open = document.getElementById(buttonId)?.getAttribute("aria-expanded") !== "true";
+    closePanels(); setPanel(panelId, buttonId, open);
+  });
+}
+document.addEventListener("click", event => {
+  if (!(event.target instanceof Element)) return;
+  if (!event.target.closest("#nav-menu-panel, #nav-menu-switch, #display-setting, #display-settings-switch")) closePanels();
+  if (event.target.closest("#nav-menu-panel a")) closePanels();
+});
+document.addEventListener("keydown", event => {
+  if (event.key !== "Escape") return;
+  const active = document.querySelector<HTMLButtonElement>('#navbar button[aria-expanded="true"]');
+  closePanels(); active?.focus();
+});
+function updateNavigation() {
+  const current = new URL(location.href);
+  document.querySelectorAll<HTMLAnchorElement>(".primary-nav a").forEach(link => {
+    const target = new URL(link.href);
+    const selected = target.origin === current.origin && target.pathname.replace(/\/$/, "") === current.pathname.replace(/\/$/, "") && (target.searchParams.get("saved") === "true") === (current.searchParams.get("saved") === "true");
+    if (selected) link.setAttribute("aria-current", "page"); else link.removeAttribute("aria-current");
+  });
+  closePanels();
+}
+updateNavigation();
+window.addEventListener("popstate", updateNavigation);
+window.addEventListener("zebrafish:navigation", updateNavigation);
+document.addEventListener("swup:page:view", updateNavigation);
+</script>
+<style>
+.navbar-shell { border-bottom: 1px solid color-mix(in srgb, var(--line-divider) 70%, transparent); box-shadow: 0 10px 32px #09243d0b; }
+.brand-link { display:flex; align-items:center; gap:.65rem; font-size:1.05rem; font-weight:700; letter-spacing:-.025em; color:var(--text-strong); flex-shrink:0; }
+.brand-mark { display:grid; place-items:center; width:2.25rem; height:2.25rem; border-radius:.75rem; background:var(--btn-regular-bg); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--primary) 18%, transparent); }
+.brand-mark img { width:1.55rem; height:1.55rem; }
+.brand-copy { display:flex; flex-direction:column; line-height:1.1; gap:.18rem; }
+.brand-copy small { color:var(--text-muted); font-size:.54rem; font-weight:500; letter-spacing:.12em; text-transform:uppercase; }
+.desktop-nav { display:none; align-items:center; gap:.2rem; margin-left:auto; margin-right:1rem; }
+.primary-nav a { font-size:.78rem; font-weight:600; border-radius:.55rem; color:var(--text-muted); padding:.65rem .78rem; transition: color .2s ease, background .2s ease, transform .2s ease; }
+.primary-nav a:hover { background:var(--btn-regular-bg); color:var(--btn-content); transform:translateY(-1px); }
+.primary-nav a[aria-current="page"] { background:var(--btn-regular-bg); color:var(--btn-content); box-shadow:inset 0 -2px var(--primary); }
+.nav-actions { gap:.15rem; padding:.25rem; border:1px solid color-mix(in srgb, var(--line-divider) 75%, transparent); border-radius:.75rem; background:color-mix(in srgb, var(--page-bg) 45%, transparent); }
+.mobile-nav { position:absolute; top:4.95rem; right:.75rem; min-width:17rem; padding:.65rem; border:1px solid color-mix(in srgb, var(--primary) 22%, var(--line-divider)); box-shadow:0 18px 45px #09243d26; }
+.mobile-nav-head { display:flex; align-items:baseline; justify-content:space-between; padding:.55rem .7rem .7rem; border-bottom:1px solid var(--line-divider); color:var(--btn-content); font-size:.65rem; font-weight:700; letter-spacing:.16em; }
+.mobile-nav-head small { color:var(--text-muted); font-size:.65rem; letter-spacing:0; font-weight:500; }
+.mobile-nav a { display:flex; justify-content:space-between; gap:2rem; margin-top:.25rem; padding:.78rem .7rem; }
+.mobile-nav a span { color:var(--primary); }
+@media(min-width:1024px) { .desktop-nav {display:flex;} .mobile-nav {display:none;} }
+@media(max-width:767px) { .brand-copy small {display:none;} .brand-link {font-size:.98rem;} .nav-actions {border-color:transparent; background:transparent; padding:0;} }
+@media(max-width:374px) { .brand-link {font-size:.9rem; gap:.35rem;} .brand-mark {width:2rem; height:2rem;} .brand-mark img {width:1.35rem; height:1.35rem;} .mobile-nav {right:.5rem; min-width:calc(100vw - 1rem);} }
+</style>

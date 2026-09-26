@@ -1,0 +1,25 @@
+---
+import {
+	getCategoryList,
+	getSortedPostsList,
+	getTagList,
+} from "../utils/content-utils";
+import { url } from "../utils/url-utils";
+
+const [posts, categories, tags] = await Promise.all([
+	getSortedPostsList(),
+	getCategoryList(),
+	getTagList(),
+]);
+---
+<section class="home-overview" aria-labelledby="latest-heading">
+	<div class="home-overview-heading">
+		<div><p class="eyebrow">THE LATEST</p><h1 id="latest-heading">最近更新</h1></div>
+		<a class="overview-link" href={url("/archive/")}>浏览全部文章 <span aria-hidden="true">→</span></a>
+	</div>
+	<div class="home-stats" aria-label="博客内容统计">
+		<span><strong>{posts.length.toString().padStart(2, "0")}</strong> 篇文章</span>
+		<span><strong>{categories.length.toString().padStart(2, "0")}</strong> 个分类</span>
+		<span><strong>{tags.length.toString().padStart(2, "0")}</strong> 个标签</span>
+	</div>
+</section>
