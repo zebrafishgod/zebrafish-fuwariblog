@@ -1,7 +1,7 @@
 ---
 title: Python 模块与包：组织代码、导入模块与管理依赖
-published: 2026-09-18
-updated: 2026-09-28
+published: 2026-09-17
+updated: 2026-09-18
 description: 从模块、包和 import 开始，理解 Python 如何查找、加载并复用代码
 tags: [Python, 基础篇]
 category: Python 学习
