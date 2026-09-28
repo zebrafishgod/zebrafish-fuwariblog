@@ -1,8 +1,8 @@
 ---
-title: Python 标准库：时间、文件、JSON 与系统工具
+title: Python 第 309～339 集：时间、随机数、系统与路径、压缩、数据序列化、设置文件、子进程，以及猴子补丁与第三方包安装
 published: 2026-09-17
 updated: 2026-09-19
-description: 使用 datetime、random、pathlib、JSON、压缩和 subprocess 等标准库工具，把基础语法应用到真实任务中。
+description: 时间、随机数、系统与路径、压缩、数据序列化、设置文件、子进程，以及猴子补丁与第三方包安装
 tags: [Python, 基础篇]
 category: Python 学习
 draft: false
@@ -21,7 +21,7 @@ lang: zh_CN
 - 安全地在练习目录中创建文件、复制文件及制作压缩文件。
 - 将购物车保存为 JSON，重新加载后继续处理。
 - 读取设置文件，知道文字设置为什么还需要类型转换。
-- 启动另一个 Python 程序，取得它打印的文字与执行结果。
+- 启动另一个 Python 程序，取得它打打印的文字与执行结果。
 - 知道标准库、第三方包与执行环境分别扮演什么角色。
 
 本章的文件例子都会自行创建样本，放在 `TemporaryDirectory` 管理的临时目录里。离开 `with` 区块时，这个临时目录会自动清理。
@@ -84,16 +84,16 @@ print(f"经过 {elapsed:.6f} 秒")
 # 经过 0.000xxx 秒（示意；实际数字取决于电脑及当次执行）
 # 说明：
 # perf_counter() 返回计时读数，第二次减第一次得到秒数。
-# sum() 返回总和；这里打印总和，方便确认被计时的计算确实完成。
+# sum() 返回总和；这里打打印总和，方便确认被计时的计算确实完成。
 ```
 
 量测耗时时优先用 `perf_counter()`，因为系统时钟可能被校正，而计时器适合比较经过时间。不要把单次测得的极小差异当成程序性能结论。
 
 `time.sleep(1)` 的意思是让程序等待约 1 秒；实际恢复时间可能更晚。它不会让某个计算「自动执行 1 秒」，也不适合拿来替代对用户输入的等待。
 
-### 读懂旧教材中的 time 写法
+### 时间戳、本地时间与格式化
 
-有些教材使用 `time.localtime()` 取得本地时间的结构，再用 `time.strftime()` 转成文字：
+`time.localtime()` 把时间戳转换成本地时间结构，`time.strftime()` 再按格式把它转换成文字：
 
 ```python
 import time
@@ -188,9 +188,9 @@ print(ordered_at_utc.isoformat())
 
 `datetime.now(utc_plus_8)` 能取得当前 UTC+8 的时间，结果随执行时刻变动。上例使用固定日期，是为了让能核对输出。
 
-没有时区信息的 `datetime` 常称为 naive datetime；有时区信息的常称为 aware datetime。初学阶段不必背术语，但同一个系统里应使用一致的时间约定，不要混著比较。
+没有时区资讯的 `datetime` 常称为 naive datetime；有时区资讯的常称为 aware datetime。初学阶段不必背术语，但同一个系统里应使用一致的时间约定，不要混著比较。
 
-### 时间戳、日期时间、文字：同一信息的不同表示
+### 时间戳、日期时间、文字：同一资讯的不同表示
 
 有时接口给的是 `1720000000` 这类时间戳，画面却要显示日期。先辨认起点和终点，再选择转换方式：
 
@@ -223,7 +223,7 @@ print(restored == moment)
 # isoformat() 返回文字，fromisoformat() 把 ISO 文字解析回日期时间。
 ```
 
-旧教材可能使用 `time.localtime(seconds)` 转成本地时间结构，再用 `time.mktime(parts)` 转回时间戳。注意 `mktime` 把输入当作**本地时间**；不能把 `time.gmtime` 得到的 UTC 结构直接交给它，却期待所有时区都得到原数值。对新程序，带明确时区的 `datetime` 转换通常更容易读懂。
+`time.mktime(parts)` 可以把本地时间结构转回时间戳，但它会把输入解释为**本地时间**。`time.gmtime()` 得到的是 UTC 结构，不能直接交给 `mktime()` 后期待所有时区都得到相同数值。需要明确时区时，应使用带时区信息的 `datetime`，避免把本地时间和 UTC 混在一起。
 
 ## 7.4 random：让测试数据有变化
 
@@ -286,11 +286,11 @@ print(first == second)
 # seed() 不是「每次只抽到同一个数」；不重设种子，序列会继续前进。
 ```
 
-种子适合让练习和测试重现问题。`random` 的结果可预测，不适合产生登录凭据或重设密码的连结；那类需求使用 `secrets`。
+种子适合让练习和测试重现问题。`random` 的结果可预测，不适合产生登录凭证或重设密码的连结；那类需求使用 `secrets`。
 
 ## 7.5 pathlib：先把「路径」当成数据
 
-`pathlib` 是现代 Python 常用的路径写法；这是对旧教材 `os.path` 写法的补充。这里的 `Path` 可以先理解为「代表路径的工具」，不需要先学完整的对象导向。
+`pathlib.Path` 和 `os.path` 都能处理文件路径。`Path` 把路径表示成对象，连接子路径时使用 `/`，代码通常更直观；`os.path.join()` 则通过函数拼接字符串路径。这里先把 `Path` 理解为“代表路径的数据”，不需要先学完整的面向对象知识。
 
 一个路径存在，不代表路径所指的文件已经存在。`Path("notes.txt")` 只是创建路径数据；`write_text()` 才会写文件。
 
@@ -345,10 +345,10 @@ with TemporaryDirectory(prefix="python_basics_") as temp_dir:
 
 可以先用一句话区分：
 
-- `os` 与 `os.path`：文件系统、路径和操作系统提供的信息。
+- `os` 与 `os.path`：文件系统、路径和操作系统提供的资讯。
 - `sys`：当前 Python 程序的执行环境与启动参数。
 
-### os.path：读懂旧教材的路径操作
+### `os.path`：用函数处理路径
 
 ```python
 import os
@@ -391,7 +391,7 @@ print(len(sys.argv) >= 1)
 
 # 输出：
 # 当前 Python 版本，例如 3.13.14（依环境而异）
-# 当前 Python 解释器的完整路径（依环境而异）
+# 当前 Python 直译器的完整路径（依环境而异）
 # True
 # 说明：
 # sys.version、sys.executable、sys.argv 都是数据属性，不是需要调用的函数。
@@ -400,7 +400,7 @@ print(len(sys.argv) >= 1)
 
 若执行 `python shop.py Alice`，通常 `sys.argv` 会是 `["shop.py", "Alice"]`。`input()` 是执行途中再询问；启动参数是在程序开始时就交给它，两者不同。
 
-`sys.path` 是汇入模块时会搜索的路径列表。遇到找不到包，先确认解释器与安装环境是否一致，避免立刻手动修改 `sys.path`。
+`sys.path` 是汇入模块时会搜索的路径列表。遇到找不到包，先确认直译器与安装环境是否一致，避免立刻手动修改 `sys.path`。
 
 ## 7.7 shutil 与 zipfile：复制、整理与压缩
 
@@ -525,7 +525,7 @@ JSON 是文字格式，许多程序语言都认识。它和 Python 字典外观�
 | `json.dump(data, file)` | Python 数据 → 文件 | 数据、已开启的文字文件 |
 | `json.load(file)` | 文件 → Python 数据 | 已开启的文字文件 |
 
-内存方式：这四个 JSON 函数中，末尾的 `s` 可以理解为「处理 string」。`loads("cart.json")` 并不会替打开文件；它会尝试把 `cart.json` 这几个字符当成 JSON 解析。
+内存方式：这四个 JSON 函数中，尾端的 `s` 可以理解为「处理 string」。`loads("cart.json")` 并不会替开文件；它会尝试把 `cart.json` 这几个字符当成 JSON 解析。
 
 ### 最小例：来回转换后，类型可能改变
 
@@ -556,13 +556,13 @@ print(original == restored)
 # False
 # 说明：
 # dumps() 返回 JSON 字符串；loads() 返回解析后的 Python 数据。
-# JSON 没有 tuple，元组会变成数组，读回 Python 后是 list。
+# JSON 没有 tuple，元组会变成阵列，读回 Python 后是 list。
 # JSON 对象的 key 是字符串，原本整数 key 1 读回后变成 "1"。
 ```
 
 这也是商品 ID 使用 `"P001"` 这类字符串的好理由：保存前后的识别值容易保持一致。
 
-`ensure_ascii=False` 让中文以可阅读的字符写在 JSON 文字中。它不会替设置文件编码；打开文件时仍应使用 `encoding="utf-8"`。
+`ensure_ascii=False` 让中文以可阅读的字符写在 JSON 文字中。它不会替设置文件编码；开文件时仍应使用 `encoding="utf-8"`。
 
 ### 最小例：保存购物车并读回
 
@@ -610,7 +610,7 @@ with TemporaryDirectory(prefix="python_basics_") as temp_dir:
 ### JSON 的四个常见坑
 
 1. **一个文件连续 `dump` 两次。** 这通常会得到两份 JSON 直接黏在一起，`load` 无法把它当成一个完整 JSON 值。先组成一个列表或字典，再一次写入。
-2. **以为任何 Python 对象都能保存。** `set`、`datetime`、函数等不能直接用默认 JSON 编码器保存。先转成列表、ISO 时间字符串等约定格式。
+2. **以为任何 Python 对象都能保存。** `set`、`datetime`、函数等不能直接用预设 JSON 编码器保存。先转成列表、ISO 时间字符串等约定格式。
 3. **整数 key 与字符串 key 混用。** `1` 和 `"1"` 在 Python 字典中可以同时存在，但转成 JSON key 后可能冲突。
 4. **把解析当成验证。** JSON 语法合法，不代表 `quantity=-5` 就是合理的购买数量。
 
@@ -618,7 +618,7 @@ with TemporaryDirectory(prefix="python_basics_") as temp_dir:
 
 ## 7.9 pickle：保存 Python 专用数据
 
-JSON 强调跨语言交换；`pickle` 着重保存 Python 支持的数据结构，因此能保留某些 JSON 不保留的类型，例如元组。
+JSON 强调跨语言交换；`pickle` 侧重保存 Python 支持的数据结构，因此能保留某些 JSON 不保留的类型，例如元组。
 
 `pickle` 使用字节数据。文件必须用 `"wb"` 写入、`"rb"` 读取。它的 `dumps()` 返回 `bytes`，与 `json.dumps()` 返回 `str` 不同。
 
@@ -652,7 +652,7 @@ with TemporaryDirectory(prefix="python_basics_") as temp_dir:
 
 `pickle.load()` 在还原数据时可能执进程序代码，所以不要加载陌生人提供或来源不明的 pickle 文件。对本系列的购物车与订单练习，优先使用容易查看与验证的 JSON。
 
-## 7.10 configparser：设置文件读出来，默认仍是文字
+## 7.10 configparser：设置文件读出来，预设仍是文字
 
 设置文件适合保存可调整的选项，例如商店名称、库存下限、是否显示提示。它和订单数据不同：设置描述程序如何运作，订单描述已经发生什么。
 
@@ -705,7 +705,7 @@ with TemporaryDirectory(prefix="python_basics_") as temp_dir:
 
 `config.read()` 对不存在的文件通常不会直接抛出「找不到文件」错误，所以正式程序若一定要有设置文件，应检查 `loaded_files` 是否为空。
 
-`fallback` 用于设置缺失时提供默认值；它不能把 `low_stock=abc` 这种错误数字自动变成有效整数。要保存改好的设置，可用文字模式打开文件后调用 `config.write(file)`。
+`fallback` 用于设置缺失时提供预设值；它不能把 `low_stock=abc` 这种错误数字自动变成有效整数。要保存改好的设置，可用文字模式开文件后调用 `config.write(file)`。
 
 ## 7.11 subprocess：启动另一个程序，并拿回结果
 
@@ -719,7 +719,7 @@ with TemporaryDirectory(prefix="python_basics_") as temp_dir:
 | `stderr` | 子程序的错误或诊断输出 |
 | `returncode` | 子程序结束时的整数状态码，惯例上 `0` 表示成功 |
 
-### 最小例：让另一个 Python 打印 5
+### 最小例：让另一个 Python 打打印 5
 
 ```python
 import subprocess
@@ -802,9 +802,9 @@ print(time.time is original_time)
 
 | 名称 | 角色 |
 |---|---|
-| Python 解释器 | 执行的程序 |
+| Python 直译器 | 执行的程序 |
 | pip | 把第三方包安装到某个 Python 环境 |
-| PyCharm | 编写、执行与除错程序的编辑环境；它需要选定 Python 解释器 |
+| PyCharm | 编写、执行与除错程序的编辑环境；它需要选定 Python 直译器 |
 
 同一台电脑可以有多个 Python 环境。在 A 环境安装的包，不会自然出现在 B 环境。
 
@@ -818,7 +818,7 @@ python -m pip --version
 python -m pip install 包名称
 ```
 
-`python -m pip` 表示「用这个 Python 执行它所属的 pip」。比起只打 `pip`，更容易辨认安装目标。但第一行创建 `.venv` 后，不会自动把之后的 `python` 切换到新环境；还需要启用环境，或直接指定环境中的解释器。
+`python -m pip` 表示「用这个 Python 执行它所属的 pip」。比起只打 `pip`，更容易辨认安装目标。但第一行创建 `.venv` 后，不会自动把之后的 `python` 切换到新环境；还需要启用环境，或直接指定环境中的直译器。
 
 例如在 Windows 的作业文件夹里，可以使用：
 
@@ -832,11 +832,11 @@ python -m pip install 包名称
 ./.venv/bin/python -m pip --version
 ```
 
-以上命令只查看 pip 信息；只有 `install` 才会安装包。
+以上命令只查看 pip 资讯；只有 `install` 才会安装包。
 
-PyCharm 中的选单名称可能随版本改变，但判断原则不变：查看项目选用的 Python Interpreter，确认它与安装包的环境一致。若「明明安装了，却无法 import」，先打印前面学过的 `sys.executable` 来确认。
+PyCharm 中的选单名称可能随版本改变，但判断原则不变：查看专案选用的 Python Interpreter，确认它与安装包的环境一致。若「明明安装了，却无法 import」，先打打印前面学过的 `sys.executable` 来确认。
 
-虚拟环境可以理解为每个项目自己的包区域。它不会自动改写的程序，也不是用来保存订单或用户数据。
+虚拟环境可以理解为每个专案自己的包区域。它不会自动改写的程序，也不是用来保存订单或用户数据。
 
 ## 7.14 把工具串起来：一笔订单的数据旅程
 
@@ -851,8 +851,46 @@ PyCharm 中的选单名称可能随版本改变，但判断原则不变：查看
 
 这里每个工具只负责一小段工作。不要因为本章学了压缩、子进程和猴子补丁，就把它们全部塞进同一个小作业。先把正确的数据流做清楚。
 
+## 7.15 动手练习
 
-## 7.15 自查与简答
+### 练习 A｜七天后到期
+
+输入一个 `YYYY-MM-DD` 形式的日期，用 `datetime.strptime` 或 `date.fromisoformat` 解析，计算七天后的日期。
+
+验收数据：
+
+- `2026-09-15` → `2026-09-22`
+- `2026-12-28` → `2027-01-04`
+- `2024-02-25` → `2024-03-03`
+
+先完成合法输入；学完错误处理后，再处理 `2026-02-30`。
+
+### 练习 B｜购物车 JSON 往返
+
+在临时目录创建一份包含至少两种商品的购物车 JSON。每项有字符串商品 ID、正整数数量和以分表示的单价。
+
+要求：
+
+- 先保存，再从文件加载，**不要直接拿原变量算总额**。
+- 从读回数据计算总额。
+- 修改一项数量，再完整覆写保存，并重新加载确认。
+- 中文商品名称能正常显示。
+
+思考：为什么不应该直接向同一文件连续追加两次 `json.dump`？
+
+### 练习 C｜设置驱动提示
+
+自己产生 INI 设置，包含商店名、库存下限与是否显示提醒。加载后，当商品库存低于下限而提醒已开启时，打打印补货提示。
+
+至少核对三种情况：提醒开启且库存不足、提醒关闭且库存不足、库存充足。不要用 `bool("false")` 解析设置。
+
+### 练习 D｜创建练习备份
+
+在临时目录中产生两个纯文字文件，打包成 ZIP，列出 ZIP 中的文件名，再解压到另一个空目录。核对解压后内容与来源相同。
+
+练习只处理自己在这次程序执行中创建的数据。
+
+## 7.16 自查与简答
 
 先遮住右栏，试著用自己的话回答。
 
@@ -863,13 +901,13 @@ PyCharm 中的选单名称可能随版本改变，但判断原则不变：查看
 | `randint(1, 6)` 可能得到 6 吗？ | 可以，两端都包含。 |
 | `result = random.shuffle(items)` 后，`result` 是什么？ | `None`；被打乱的是原列表 `items`。 |
 | 创建 `Path("a.txt")` 是否已经创建文件？ | 没有，它只是路径数据。 |
-| `json.loads("cart.json")` 会读文件吗？ | 不会，它尝试解析这段字符串；读文件用打开文件后的 `json.load(file)`。 |
+| `json.loads("cart.json")` 会读文件吗？ | 不会，它尝试解析这段字符串；读文件用开文件后的 `json.load(file)`。 |
 | 元组和整数 key 经 JSON 往返会怎样？ | 元组读回成列表，整数 key 读回成字符串。 |
 | `dump` 和 `print` 的共同返回值是什么？ | 这里的 `json.dump` 与 `print` 都返回 `None`，但额外动作不同。 |
 | `bool("no")` 为什么是 `True`？ | 非空字符串为真；INI 布尔值应用 `getboolean` 解析。 |
-| `subprocess.run` 返回的就是子程序打印的文字吗？ | 不是，返回结果对象；文字在 `stdout` 属性中。 |
+| `subprocess.run` 返回的就是子程序打打印的文字吗？ | 不是，返回结果对象；文字在 `stdout` 属性中。 |
 | 为什么示例用 `sys.executable`？ | 明确使用当前的 Python，避免误用另一个环境。 |
 | pickle 比 JSON 保留更多态别，就应该总用 pickle 吗？ | 不应；还要考虑可信来源、可读性与跨语言需求。购物作业优先用 JSON。 |
-| 创建虚拟环境后，编辑器会自动选它吗？ | 不一定，仍要确认项目所选解释器。 |
+| 创建虚拟环境后，编辑器会自动选它吗？ | 不一定，仍要确认专案所选直译器。 |
 
 读下一章前，请确认能不看示例完成「数据 → JSON 文件 → 数据 → 计算结果」这个小循环。下一章会用哈希检查文件、用正则检查文字，并用日志记录程序发生过的事。
