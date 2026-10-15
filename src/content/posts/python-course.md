@@ -2,7 +2,7 @@
 title: "Python 教程目录：基础篇与进阶篇"
 slug: python-course
 published: 2026-10-14
-updated: 2026-10-14
+updated: 2026-10-15
 description: "按章节学习 Python：12 章基础篇、4 章进阶篇，涵盖语言基础、函数、模块、面向对象和异常处理，并附电商系统案例入口。"
 tags: ["Python", "学习路线", "教程目录"]
 category: Python 学习
