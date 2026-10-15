@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { afterEach, test } from "node:test";
-import { filterPosts, parsePostFilters } from "../src/utils/post-filter.ts";
+import { filterPosts, getCategoryTagOptions, parsePostFilters, retainAvailableTags } from "../src/utils/post-filter.ts";
 import { BOOKMARK_EVENT, BOOKMARK_KEY, readBookmarks, readPreference, toggleBookmark, writePreference } from "../src/utils/preferences.ts";
 
 const posts = [
@@ -10,6 +10,28 @@ const posts = [
 ];
 const filters = query => parsePostFilters(new URLSearchParams(query));
 const slugs = result => result.map(post => post.slug);
+
+test("tag options follow categories, including all, uncategorized and unknown categories", () => {
+  assert.deepEqual(getCategoryTagOptions(posts, filters("category=技術")), ["Astro", "Svelte", "Web"]);
+  assert.deepEqual(getCategoryTagOptions(posts, filters("")), ["Astro", "Svelte", "Web", "生活"]);
+  assert.deepEqual(getCategoryTagOptions(posts, filters("uncategorized=true")), ["生活"]);
+  assert.deepEqual(getCategoryTagOptions(posts, filters("category=missing")), []);
+  assert.deepEqual(getCategoryTagOptions(posts, filters("category=技術&category=missing")), ["Astro", "Svelte", "Web"]);
+});
+
+test("category changes remove hidden tag selections while preserving valid tags and other filters", () => {
+  const initial = filters("category=技術&tag=生活&tag=Web&q=Astro&saved=true&sort=oldest");
+  const result = retainAvailableTags(posts, initial);
+  assert.deepEqual(result, { ...initial, tags: ["Web"] });
+  assert.deepEqual(initial.tags, ["生活", "Web"]);
+  assert.deepEqual(slugs(filterPosts(posts, result, ["alpha"])), ["alpha"]);
+  assert.deepEqual(retainAvailableTags(posts, filters("uncategorized=true&tag=Web")).tags, []);
+});
+
+test("category tag options trim category names and deduplicate shared tags without following search results", () => {
+  const extra = [...posts, { slug: "extra", data: { ...posts[0].data, category: " 技術 ", tags: ["Web"] } }];
+  assert.deepEqual(getCategoryTagOptions(extra, filters("category=技術&q=no-match&tag=Web&saved=true")), ["Astro", "Svelte", "Web"]);
+});
 
 test("sorts tied dates deterministically without mutating source", () => {
   assert.deepEqual(slugs(filterPosts(posts, filters(""))), ["beta", "gamma", "alpha"]);

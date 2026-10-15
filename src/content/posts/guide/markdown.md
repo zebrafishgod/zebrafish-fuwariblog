@@ -2,7 +2,7 @@
 title: Markdown Example
 published: 2026-09-11
 description: A simple example of a Markdown blog post.
-tags: [Markdown, Blogging, Demo]
+tags: [Fuwari]
 category: Fuwari
 draft: false
 ---

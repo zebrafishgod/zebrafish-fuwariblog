@@ -1,7 +1,7 @@
 ---
 title: Draft Example
 published: 2024-01-11
-tags: [Markdown, Blogging, Demo]
+tags: [Fuwari]
 category: Fuwari
 draft: true
 ---

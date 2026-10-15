@@ -30,6 +30,28 @@ export function parsePostFilters(params: URLSearchParams): PostFilters {
 	};
 }
 
+export function getCategoryTagOptions(
+	posts: DiscoverPost[],
+	filters: Pick<PostFilters, "categories" | "uncategorized">,
+): string[] {
+	const matchingPosts = posts.filter((post) => {
+		const category = post.data.category?.trim() || "";
+		return (
+			(!filters.categories.length || filters.categories.includes(category)) &&
+			(!filters.uncategorized || !category)
+		);
+	});
+	return [...new Set(matchingPosts.flatMap((post) => post.data.tags))].sort();
+}
+
+export function retainAvailableTags(
+	posts: DiscoverPost[],
+	filters: PostFilters,
+): PostFilters {
+	const availableTags = new Set(getCategoryTagOptions(posts, filters));
+	return { ...filters, tags: filters.tags.filter((tag) => availableTags.has(tag)) };
+}
+
 export function filterPosts<T extends DiscoverPost>(
 	posts: T[],
 	filters: PostFilters,

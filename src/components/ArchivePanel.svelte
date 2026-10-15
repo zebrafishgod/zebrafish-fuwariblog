@@ -3,7 +3,9 @@ import { onMount, tick } from "svelte";
 import {
 	type DiscoverPost,
 	filterPosts,
+	getCategoryTagOptions,
 	parsePostFilters,
+	retainAvailableTags,
 } from "../utils/post-filter";
 import { BOOKMARK_EVENT, readBookmarks } from "../utils/preferences";
 import { getPostUrlBySlug } from "../utils/url-utils";
@@ -20,9 +22,7 @@ $: categoryOptions = [
 			.filter((value): value is string => !!value),
 	),
 ].sort();
-$: tagOptions = [
-	...new Set(sortedPosts.flatMap((post) => post.data.tags)),
-].sort();
+$: tagOptions = getCategoryTagOptions(sortedPosts, filters);
 $: filtered = filterPosts(sortedPosts, filters, bookmarks);
 
 async function syncUrl() {
@@ -46,6 +46,14 @@ function toggleTag(tag: string) {
 		: [...filters.tags, tag];
 	syncUrl();
 }
+function changeCategory(value: string) {
+	filters = retainAvailableTags(sortedPosts, {
+		...filters,
+		categories: value && value !== "__uncategorized" ? [value] : [],
+		uncategorized: value === "__uncategorized",
+	});
+	syncUrl();
+}
 function reset() {
 	filters = parsePostFilters(new URLSearchParams());
 	syncUrl();
@@ -55,7 +63,9 @@ onMount(() => {
 		bookmarks = readBookmarks();
 	};
 	const updateFilters = () => {
-		filters = parsePostFilters(new URLSearchParams(window.location.search));
+		const parsed = parsePostFilters(new URLSearchParams(window.location.search));
+		filters = retainAvailableTags(sortedPosts, parsed);
+		if (filters.tags.length !== parsed.tags.length) syncUrl();
 	};
 	updateFilters();
 	updateBookmarks();
@@ -85,7 +95,7 @@ function dateLabel(value: Date | string) {
   <p class="section-description">{filters.saved ? "收藏感兴趣的文章，留给下一次静心阅读。收藏只存储在此浏览器。" : "从一个关键词出发，找到下一篇值得阅读的文章。"}</p>
   <div class="archive-controls">
     <label class="search-field"><span>搜索文章</span><input type="search" placeholder="标题、摘要或标签…" bind:value={filters.query} on:input={syncUrl} disabled={!ready}/></label>
-    <label><span>分类</span><select value={filters.uncategorized ? "__uncategorized" : (filters.categories[0] || "")} disabled={!ready} on:change={(event) => { const value = event.currentTarget.value; filters.categories = value && value !== "__uncategorized" ? [value] : []; filters.uncategorized = value === "__uncategorized"; syncUrl(); }}>
+    <label><span>分类</span><select value={filters.uncategorized ? "__uncategorized" : (filters.categories[0] || "")} disabled={!ready} on:change={(event) => changeCategory(event.currentTarget.value)}>
       <option value="">全部分类</option>{#each categoryOptions as category}<option value={category}>{category}</option>{/each}<option value="__uncategorized">未分类</option>
     </select></label>
     <label><span>排序</span><select bind:value={filters.sort} on:change={syncUrl} disabled={!ready}><option value="newest">最新优先</option><option value="oldest">最早优先</option><option value="title">按标题</option></select></label>
