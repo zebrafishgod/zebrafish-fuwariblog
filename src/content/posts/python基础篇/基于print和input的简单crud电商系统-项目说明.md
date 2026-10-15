@@ -3,7 +3,7 @@ title:  基于print和input的简单 CRUD 电商系统
 published: 2026-09-25
 updated: 2026-09-25
 description: 基础语法 Python实例
-tags: [Python, 基础篇, 实例]
+tags: ["项目实战"]
 category: Python 学习
 draft: false
 lang: zh_CN
