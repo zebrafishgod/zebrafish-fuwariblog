@@ -2,7 +2,7 @@
 title: Draft Example
 published: 2024-01-11
 tags: [Markdown, Blogging, Demo]
-category: Examples
+category: Fuwari
 draft: true
 ---
 
